@@ -1,5 +1,5 @@
 # Interpreter
- Create a fully working interpreter.
+ **In progress** Create a fully working interpreter.
 
 ## Interpreter vs Compiler
 Interpreter and compiler are not mutually exclusive ideas. A language can have elements from both.
