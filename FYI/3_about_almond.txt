@@ -1,0 +1,20 @@
+The language will be:
+    - High level
+    - Syntax will be similar to c
+    - Feature dynamically typed variables
+    - Automatic memory management
+    - Features:
+        - Booleans: true/false
+        - Numbers: 1, 1.0
+        - Strings: "Words"
+        - Nulls: 0
+        - Arithmetic expressions: +-*/
+        - Comparisons: >,=
+        - logical operators: and, or
+        - precedence: ()
+        - variables
+        - flowcontrol: loops
+        - functions
+        - Classes
+        - Instantiation and initialization
+        - Inheritance

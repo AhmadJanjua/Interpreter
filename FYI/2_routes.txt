@@ -1,0 +1,16 @@
+There are many diffrent types of routes that can be taken when making a compiled or interpreted language.
+
+Single-Pass Compiler:
+    All compilation must occur in one pass. This means that a statement must have enough info to be run in visit.
+    The parser interleaves the parsing, analysis, and the code generation and doesnt allocate any IRs or AST.
+
+Tree-walk Interpreter:
+    A language that starts to run a program right after parsing it to the AST. The program then traverses the syntax
+    tree. This method is the most simple, but is slow.
+Transpiler:
+    A language that is a frontend (scanner and parser) that converts sytax to an already existing language that has a
+    some backend. Generally langauges can transpile to any other language, but with the prevelance of UNIX, c is a common
+    choice.
+Just-in-time Compilation:
+    A compilor that takes in bytecode and converts it to the machines native architecture. This is done at runtime of the
+    program and not as a compilation.

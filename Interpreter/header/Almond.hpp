@@ -1,5 +1,0 @@
-class Almond
-{
-    private:
-    public:
-};

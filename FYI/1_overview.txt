@@ -1,0 +1,36 @@
+-   The general idea is to start off with raw text and through a series of steps abstract the 
+    text to meaningful components that the interpreter can extract and turn into some useful functionality.
+-   Step 1: Scanning
+    -   Also called lexing or lexical analysis. A lexer or scanner takes in a stream of characters and breaks
+        groups the characters into tokens.
+    -   Tokens are meaningful and can be a single letter or sequence of letters.
+    -   Some characters are not tokens such as some whitespace.
+-   Step 2: Parsing
+    -   The grammar component of the interpreter or language.
+    -   Takes in a sequence of tokens and builds a abstract syntax tree (AST) or parse tree.
+    -   Parser detects and reports syntax issues.
+-   Step 3: Static Analysis
+    -   Step 3 can vary from implementation to implementation.
+    -   For variables do binding or resolution. Each identifier or variable name is linked to where its defined.
+    -   For statically typed languages this section verifies the correct type has been used and reports type errors.
+    -   Information here can be stored in AST as attributes.
+    -   Variables may also be stored in a lookup table or symbol table.
+
+Steps 1, 2, and 3 are considered frontend.
+
+-   Step 4: Intermediate Representation
+    -   Also goes by acronym IR,
+    -   This allows for the same frontend of language with different backends.
+    -   Meaning a language that needs to compile to a unique hardware can share the same initial structure, but to support
+        different hardware it has to use a new code that is platform specific.
+    -   Reduces development time for various different platforms.
+-   Step 5: Optimization
+    -   Languages can swap code for equivalent code that may save resources and be faster.
+    -   An example is C converting operations like 1+4/4+8 to 10 at compile time so program doesn't have to recompute the 
+        operation when its running.
+-   Step 6: Code Generation
+    -   Converting the code into a form that the machine it is running on can understand.
+    -   The code can be generated for a real CPU or for a virtual machine. Machine code vs bytecode.
+    -   Virtual Machines: A program that emulates the architecture of a hypothetical machine. This is slower
+-   Step 7: Runtime
+    -   The code is ready and can be run as an exectable or on the environment.
