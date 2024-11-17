@@ -1,21 +1,24 @@
 package main
 
 import (
+	"Interpreter/almond"
 	"fmt"
+	"os"
 )
 
-//TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
-
+// Two ways of interacting with interpreter:
+//   - shell and src file
 func main() {
-	//TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-	// to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
-	s := "gopher"
-	fmt.Println("Hello and welcome, %s!", s)
+	args := os.Args[1:]
 
-	for i := 1; i <= 5; i++ {
-		//TIP <p>To start your debugging session, right-click your code in the editor and select the Debug option.</p> <p>We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-		// for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.</p>
-		fmt.Println("i =", 100/i)
+	if len(args) > 1 {
+		fmt.Println("Usage: too many arguments -> try to pass path to source code or run with no arguments")
+		os.Exit(64)
+
+	} else if len(args) == 1 { // Run file
+		almond.RunFile(args[0])
+
+	} else { // Interative shell
+		almond.RunPrompt()
 	}
 }
