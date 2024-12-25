@@ -185,9 +185,9 @@ func (s *Tokenizer) nextToken() {
 		}
 	case '!':
 		if s.match('=') {
-			s.addToken(tokentype.BANG, "")
-		} else {
 			s.addToken(tokentype.NOT_EQUALS, "")
+		} else {
+			s.addToken(tokentype.BANG, "")
 		}
 	case '>':
 		if s.match('=') {

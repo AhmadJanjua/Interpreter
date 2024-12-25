@@ -1,7 +1,9 @@
 package almond
 
 import (
+	"Interpreter/expr"
 	"Interpreter/fault"
+	"Interpreter/parser"
 	"Interpreter/tokenizer"
 	"bufio"
 	"fmt"
@@ -12,10 +14,14 @@ import (
 func run(line string) {
 	tokenizer := tokenizer.NewTokenizer(line)
 	all_toks := tokenizer.Tokenize()
+	parser := parser.NewParser(all_toks)
+	expression := parser.Parse()
 
-	for _, element := range all_toks {
-		fmt.Println(element.String())
+	if fault.Had_fault {
+		return
 	}
+
+	fmt.Println(expr.ASTPrinter(expression))
 }
 
 // Run the code from a file

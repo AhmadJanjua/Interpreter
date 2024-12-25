@@ -6,8 +6,7 @@ import (
 	"os"
 )
 
-// Two ways of interacting with interpreter:
-//   - shell and src file
+// method to interact with interpreter: shell || src file
 func main() {
 	args := os.Args[1:]
 
@@ -15,10 +14,12 @@ func main() {
 		fmt.Println("Usage: too many arguments -> try to pass path to source code or run with no arguments")
 		os.Exit(64)
 
-	} else if len(args) == 1 { // Run file
+	} else if len(args) == 1 {
+		// Run file
 		almond.RunFile(args[0])
 
-	} else { // Interative shell
+	} else {
+		// Interative shell
 		almond.RunPrompt()
 	}
 }
