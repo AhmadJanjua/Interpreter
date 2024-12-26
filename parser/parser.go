@@ -6,6 +6,7 @@ import (
 	"Interpreter/token"
 	"Interpreter/tokentype"
 	"errors"
+	"strconv"
 )
 
 type Parser struct {
@@ -71,7 +72,7 @@ func (p *Parser) consume(tok_type tokentype.TokenType, message string) (token.To
 
 	fault.TokenError(p.peek(), message)
 
-	return token.Token{}, errors.New("")
+	return token.Token{}, errors.New("Parser Error: issue occured while parsing token: " + tok_type.String())
 }
 
 // In the case of an error advance tokens to get fresh start
@@ -103,13 +104,24 @@ func (p *Parser) synchronize() {
 func (p *Parser) primary() (expr.Expr, error) {
 	// Check literals w/o values
 	if p.match(tokentype.FALSE, tokentype.TRUE, tokentype.NULL) {
-		return expr.NewLiteral(p.previous().GetType(), ""), nil
+		return expr.NewLiteral(p.previous().GetType()), nil
 	}
 
 	// check literals with values
 	if p.match(tokentype.NUMBER, tokentype.STRING) {
 		tok := p.previous()
-		return expr.NewLiteral(tok.GetType(), tok.GetLiteral()), nil
+
+		if tok.GetType() == tokentype.NUMBER {
+			value, err := strconv.ParseFloat(tok.GetLiteral(), 64)
+
+			if err != nil {
+				return expr.Literal{}, err
+			}
+
+			return expr.NewNumber(value), nil
+		}
+
+		return expr.NewString(tok.GetLiteral()), nil
 	}
 
 	// check parenthesis
@@ -133,7 +145,7 @@ func (p *Parser) primary() (expr.Expr, error) {
 	}
 
 	// unknown character
-	return expr.NewLiteral(p.peek().GetType(), "Unknown"), nil
+	return expr.NewLiteral(p.peek().GetType()), errors.New("Parser Error: unknown literal in primary")
 }
 
 // check for unary operations: L6

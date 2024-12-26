@@ -7,6 +7,7 @@ import (
 )
 
 var Had_fault bool = false
+var Had_runtime_fault bool = false
 
 // Helper to format error
 func report(line int, where, message string) {
@@ -26,4 +27,10 @@ func TokenError(token token.Token, message string) {
 // Submit an error
 func Error(line int, message string) {
 	report(line, "", message)
+}
+
+// Runtime Error
+func RuntimeError(message string, tok token.Token) {
+	fmt.Printf("%s\n[line %d] ", message, tok.GetLine())
+	Had_runtime_fault = true
 }

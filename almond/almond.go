@@ -21,7 +21,7 @@ func run(line string) {
 		return
 	}
 
-	fmt.Println(expr.ASTPrinter(expression))
+	expr.Interpret(expression)
 }
 
 // Run the code from a file
@@ -40,6 +40,9 @@ func RunFile(filename string) error {
 	// exit if there is an error in the code
 	if fault.Had_fault {
 		os.Exit(65)
+	}
+	if fault.Had_runtime_fault {
+		os.Exit(70)
 	}
 	return e
 }
