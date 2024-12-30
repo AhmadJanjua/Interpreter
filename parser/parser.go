@@ -3,6 +3,7 @@ package parser
 import (
 	"Interpreter/expr"
 	"Interpreter/fault"
+	"Interpreter/stmt"
 	"Interpreter/token"
 	"Interpreter/tokentype"
 	"errors"
@@ -121,6 +122,11 @@ func (p *Parser) primary() (expr.Expr, error) {
 		}
 
 		return expr.NewString(tok.GetLiteralStr()), nil
+	}
+
+	// Get Identifier
+	if p.match(tokentype.IDENTIFIER) {
+		return expr.NewVar(*p.previous()), nil
 	}
 
 	// check parenthesis
@@ -259,12 +265,146 @@ func (p *Parser) equality() (expr.Expr, error) {
 	return expression, nil
 }
 
-// Entry into recursive descent parsing: Level1
-func (p *Parser) expression() (expr.Expr, error) {
-	return p.equality()
+func (p *Parser) assignment() (expr.Expr, error) {
+	express, err := p.equality()
+
+	if err != nil {
+		return expr.Literal{}, err
+	}
+
+	if p.match(tokentype.ASSIGNMENT) {
+		equals := p.previous()
+		value, err := p.assignment()
+
+		if err != nil {
+			return expr.Literal{}, err
+		}
+
+		s, ok := express.(expr.Var)
+
+		if !ok {
+			fault.TokenError(*equals, "Invalid assignment target.")
+			return expr.Literal{}, errors.New("invalid assignment target")
+		}
+
+		name := s.GetToken()
+		return expr.NewAssign(name, value), nil
+	}
+	return express, nil
 }
 
-func (p *Parser) Parse() expr.Expr {
-	expression, _ := p.expression()
-	return expression
+// Entry into recursive descent parsing: Level1
+func (p *Parser) expression() (expr.Expr, error) {
+	return p.assignment()
+}
+
+func (p *Parser) expressionStmt() (stmt.Stmt, error) {
+	value, err := p.expression()
+
+	if err != nil {
+		return stmt.Expression{}, err
+	}
+
+	p.consume(tokentype.SEMI_COLON, "Expect ';' after value.")
+	return *stmt.NewExpression(value), nil
+}
+
+func (p *Parser) printStmt() (stmt.Stmt, error) {
+	value, err := p.expression()
+
+	if err != nil {
+		return stmt.Print{}, err
+	}
+
+	p.consume(tokentype.SEMI_COLON, "Expect ';' after value.")
+	return *stmt.NewPrint(value), nil
+}
+
+func (p *Parser) block() ([]stmt.Stmt, error) {
+	var statements []stmt.Stmt
+
+	for !p.check(tokentype.R_BRACE) && !p.isAtEnd() {
+		statements = append(statements, p.declaration())
+	}
+
+	_, err := p.consume(tokentype.R_BRACE, "Expected '}' after block.")
+
+	if err != nil {
+		return []stmt.Stmt{}, err
+	}
+	return statements, nil
+}
+
+func (p *Parser) statement() (stmt.Stmt, error) {
+	if p.match(tokentype.PRINT) {
+		return p.printStmt()
+	}
+
+	if p.match(tokentype.L_BRACE) {
+		value, err := p.block()
+
+		if err != nil {
+			return stmt.Expression{}, err
+		}
+
+		return stmt.NewBlock(value), nil
+	}
+	return p.expressionStmt()
+
+}
+
+func (p *Parser) varDeclaration() (stmt.Stmt, error) {
+	// TODO: handle error
+	name, err := p.consume(tokentype.IDENTIFIER, "Expected variable name.")
+
+	if err != nil {
+		return nil, err
+	}
+
+	var initializer expr.Expr
+
+	if p.match(tokentype.ASSIGNMENT) {
+		initializer, err = p.expression()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = p.consume(tokentype.SEMI_COLON, "Expected ';' after variable declaration.")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return stmt.NewVar(*name, initializer), nil
+
+}
+
+func (p *Parser) declaration() stmt.Stmt {
+	var statement stmt.Stmt
+	var err error
+
+	if p.match(tokentype.AUTO) {
+		statement, err = p.varDeclaration()
+	} else {
+		statement, err = p.statement()
+	}
+
+	if err != nil {
+		p.synchronize()
+		return nil
+	}
+
+	return statement
+}
+
+func (p *Parser) Parse() []stmt.Stmt {
+	var statements []stmt.Stmt
+
+	for !p.isAtEnd() {
+		statements = append(statements, p.declaration())
+	}
+
+	return statements
 }

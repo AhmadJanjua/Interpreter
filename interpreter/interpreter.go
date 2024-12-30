@@ -1,17 +1,27 @@
 package interpreter
 
 import (
-	"Interpreter/expr"
-	"fmt"
+	"Interpreter/environment"
+	"Interpreter/fault"
+	"Interpreter/stmt"
+	"Interpreter/token"
 )
 
-func Interpret(e expr.Expr) {
-	obj, err := e.Evaluate()
+type Interpreter struct {
+	env environment.Environment
+}
 
-	if err != nil {
-		fmt.Println(err)
-		return
+func NewInterpreter() *Interpreter {
+	return &Interpreter{*environment.NewEnv()}
+}
+
+func (i *Interpreter) Interpret(statements []stmt.Stmt) {
+	for _, statement := range statements {
+		// TODO: Error handling
+		err := statement.Evaluate(&i.env)
+
+		if err != nil {
+			fault.RuntimeError("", token.Token{})
+		}
 	}
-
-	fmt.Println(obj.String())
 }

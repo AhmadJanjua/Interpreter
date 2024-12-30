@@ -11,21 +11,24 @@ import (
 )
 
 // Process input string
-func run(line string) {
+func run(inter *interpreter.Interpreter, line string) {
 	tokenizer := tokenizer.NewTokenizer(line)
 	all_toks := tokenizer.Tokenize()
 	parser := parser.NewParser(all_toks)
-	expression := parser.Parse()
+	statements := parser.Parse()
 
 	if fault.Had_fault {
 		return
 	}
 
-	interpreter.Interpret(expression)
+	inter.Interpret(statements)
 }
 
 // Run the code from a file
 func RunFile(filename string) error {
+	// Create a new interpreter
+	inter := interpreter.NewInterpreter()
+
 	// read file bytes and get error
 	data, e := os.ReadFile(filename)
 
@@ -35,7 +38,7 @@ func RunFile(filename string) error {
 	}
 
 	// convert byte to string and run code
-	run(string(data))
+	run(inter, string(data))
 
 	// exit if there is an error in the code
 	if fault.Had_fault {
@@ -49,6 +52,9 @@ func RunFile(filename string) error {
 
 // Run interactive console
 func RunPrompt() error {
+	// Create a new interpreter
+	inter := interpreter.NewInterpreter()
+
 	// Scan console inputs
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -59,7 +65,7 @@ func RunPrompt() error {
 		text := scanner.Text()
 
 		// Run and store line input
-		run(text)
+		run(inter, text)
 
 		// Dont kill session if there is an error
 		fault.Had_fault = false

@@ -79,6 +79,10 @@ func (t *Token) GetLiteralStr() string {
 	return ""
 }
 
+func (t *Token) GetObject() object.Object {
+	return t.obj
+}
+
 // Get the lexeme value
 func (t *Token) GetLexeme() string {
 	return t.lexeme

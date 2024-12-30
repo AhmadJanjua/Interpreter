@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"Interpreter/environment"
 	"Interpreter/fault"
 	"Interpreter/object"
 	"Interpreter/token"
@@ -11,7 +12,7 @@ import (
 )
 
 type Expr interface {
-	Evaluate() (object.Object, error)
+	Evaluate(e *environment.Environment) (object.Object, error)
 }
 
 // Literal
@@ -30,7 +31,7 @@ func NewNumber(f float64) *Literal {
 func NewString(s string) *Literal {
 	return &Literal{*object.NewObject(tokentype.STRING, s)}
 }
-func (l Literal) Evaluate() (object.Object, error) {
+func (l Literal) Evaluate(e *environment.Environment) (object.Object, error) {
 	return l.value, nil
 }
 
@@ -44,8 +45,8 @@ func NewUnary(operator token.Token, right Expr) *Unary {
 	return &Unary{operator, right}
 }
 
-func (u Unary) Evaluate() (object.Object, error) {
-	right, err := u.right.Evaluate()
+func (u Unary) Evaluate(e *environment.Environment) (object.Object, error) {
+	right, err := u.right.Evaluate(e)
 
 	if err != nil {
 		return right, err
@@ -88,15 +89,15 @@ type Binary struct {
 func NewBinary(left Expr, operator token.Token, right Expr) *Binary {
 	return &Binary{left, operator, right}
 }
-func (b Binary) Evaluate() (object.Object, error) {
-	right, err := b.right.Evaluate()
+func (b Binary) Evaluate(e *environment.Environment) (object.Object, error) {
+	right, err := b.right.Evaluate(e)
 
 	// Cascade error
 	if err != nil {
 		return right, err
 	}
 
-	left, err := b.left.Evaluate()
+	left, err := b.left.Evaluate(e)
 
 	// Cascade error
 	if err != nil {
@@ -192,17 +193,44 @@ type Grouping struct {
 func NewGrouping(expression Expr) *Grouping {
 	return &Grouping{expression}
 }
-func (g Grouping) Evaluate() (object.Object, error) {
-	return g.expression.Evaluate()
+func (g Grouping) Evaluate(e *environment.Environment) (object.Object, error) {
+	return g.expression.Evaluate(e)
 }
 
-func Interpret(e Expr) {
-	obj, err := e.Evaluate()
+// Variable
+type Var struct {
+	name token.Token
+}
+
+func NewVar(n token.Token) *Var {
+	return &Var{n}
+}
+
+func (v *Var) GetToken() token.Token {
+	return v.name
+}
+
+func (v Var) Evaluate(e *environment.Environment) (object.Object, error) {
+	return e.Get(v.name)
+}
+
+// Assignment
+type Assign struct {
+	name  token.Token
+	value Expr
+}
+
+func NewAssign(name token.Token, value Expr) *Assign {
+	return &Assign{name, value}
+}
+
+func (a Assign) Evaluate(e *environment.Environment) (object.Object, error) {
+	value, err := a.value.Evaluate(e)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		return object.Object{}, err
 	}
 
-	fmt.Println(obj.String())
+	e.Assign(a.name, value)
+	return value, nil
 }
