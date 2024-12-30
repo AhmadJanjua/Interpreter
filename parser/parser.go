@@ -6,7 +6,6 @@ import (
 	"Interpreter/token"
 	"Interpreter/tokentype"
 	"errors"
-	"strconv"
 )
 
 type Parser struct {
@@ -21,8 +20,8 @@ func NewParser(tokens []token.Token) *Parser {
 }
 
 // Get current token
-func (p *Parser) peek() token.Token {
-	return p.tokens[p.current]
+func (p *Parser) peek() *token.Token {
+	return &p.tokens[p.current]
 }
 
 // Check if End of file is reached
@@ -31,12 +30,12 @@ func (p *Parser) isAtEnd() bool {
 }
 
 // Return previous token
-func (p *Parser) previous() token.Token {
-	return p.tokens[p.current-1]
+func (p *Parser) previous() *token.Token {
+	return &p.tokens[p.current-1]
 }
 
 // Return current token and increment
-func (p *Parser) advance() token.Token {
+func (p *Parser) advance() *token.Token {
 	if !p.isAtEnd() {
 		p.current++
 	}
@@ -65,14 +64,14 @@ func (p *Parser) match(tok_types ...tokentype.TokenType) bool {
 }
 
 // Report the error
-func (p *Parser) consume(tok_type tokentype.TokenType, message string) (token.Token, error) {
+func (p *Parser) consume(tok_type tokentype.TokenType, message string) (*token.Token, error) {
 	if p.check(tok_type) {
 		return p.advance(), nil
 	}
 
-	fault.TokenError(p.peek(), message)
+	fault.TokenError(*p.peek(), message)
 
-	return token.Token{}, errors.New("Parser Error: issue occured while parsing token: " + tok_type.String())
+	return &token.Token{}, errors.New("Parser Error: issue occured while parsing token: " + tok_type.String())
 }
 
 // In the case of an error advance tokens to get fresh start
@@ -112,16 +111,16 @@ func (p *Parser) primary() (expr.Expr, error) {
 		tok := p.previous()
 
 		if tok.GetType() == tokentype.NUMBER {
-			value, err := strconv.ParseFloat(tok.GetLiteral(), 64)
+			value, ok := tok.GetLiteral().(float64)
 
-			if err != nil {
-				return expr.Literal{}, err
+			if !ok {
+				return expr.Literal{}, nil
 			}
 
 			return expr.NewNumber(value), nil
 		}
 
-		return expr.NewString(tok.GetLiteral()), nil
+		return expr.NewString(tok.GetLiteralStr()), nil
 	}
 
 	// check parenthesis
@@ -159,7 +158,7 @@ func (p *Parser) unary() (expr.Expr, error) {
 			return right, err
 		}
 
-		return expr.NewUnary(operator, right), nil
+		return expr.NewUnary(*operator, right), nil
 	}
 
 	return p.primary()
@@ -181,7 +180,7 @@ func (p *Parser) factor() (expr.Expr, error) {
 			return right, err
 		}
 
-		expression = expr.NewBinary(expression, operator, right)
+		expression = expr.NewBinary(expression, *operator, right)
 	}
 
 	return expression, nil
@@ -205,7 +204,7 @@ func (p *Parser) term() (expr.Expr, error) {
 			return right, err
 		}
 
-		expression = expr.NewBinary(expression, operator, right)
+		expression = expr.NewBinary(expression, *operator, right)
 	}
 
 	return expression, nil
@@ -229,7 +228,7 @@ func (p *Parser) comparison() (expr.Expr, error) {
 			return right, err
 		}
 
-		expression = expr.NewBinary(expression, operator, right)
+		expression = expr.NewBinary(expression, *operator, right)
 	}
 
 	return expression, nil
@@ -253,7 +252,7 @@ func (p *Parser) equality() (expr.Expr, error) {
 			return right, err
 		}
 
-		expression = expr.NewBinary(expression, operator, right)
+		expression = expr.NewBinary(expression, *operator, right)
 	}
 
 	// no errors

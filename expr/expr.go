@@ -2,87 +2,36 @@ package expr
 
 import (
 	"Interpreter/fault"
+	"Interpreter/object"
 	"Interpreter/token"
 	"Interpreter/tokentype"
 	"errors"
 	"fmt"
+	"os"
 )
 
 type Expr interface {
-	accept() string
-	evaluate() (Literal, error)
+	Evaluate() (object.Object, error)
 }
 
 // Literal
 type Literal struct {
-	kind tokentype.TokenType
-	str  string
-	num  float64
+	value object.Object
 }
 
-func NewLiteral(kind tokentype.TokenType) *Literal {
-	return &Literal{kind, "", 0}
-}
-func NewString(str string) *Literal {
-	return &Literal{tokentype.STRING, str, 0}
-}
-func NewNumber(num float64) *Literal {
-	return &Literal{tokentype.NUMBER, "", num}
+func NewLiteral(t tokentype.TokenType) *Literal {
+	return &Literal{*object.NewObject(t, nil)}
 }
 
-func (l Literal) accept() string {
-	// Return number
-	if l.kind == tokentype.NUMBER {
-		return l.kind.String() + "-" + fmt.Sprintf("%f", l.num)
-	}
-
-	// Return string
-	if l.kind == tokentype.STRING {
-		return l.kind.String() + "-" + l.str
-	}
-
-	// Return type
-	return l.kind.String()
-}
-func (l Literal) evaluate() (Literal, error) {
-	return l, nil
+func NewNumber(f float64) *Literal {
+	return &Literal{*object.NewObject(tokentype.NUMBER, f)}
 }
 
-// Get the truth value of a literal
-func (l Literal) isTruthy() bool {
-	// 0, null, false
-	switch l.kind {
-	case tokentype.NULL:
-		return false
-	case tokentype.FALSE:
-		return false
-	case tokentype.NUMBER:
-		if l.num == 0 {
-			return false
-		}
-	}
-	return true
+func NewString(s string) *Literal {
+	return &Literal{*object.NewObject(tokentype.STRING, s)}
 }
-
-func (left Literal) isEqual(right Literal) bool {
-	if left.kind != right.kind {
-		return false
-	}
-
-	switch right.kind {
-	case tokentype.NUMBER:
-		if right.num != left.num {
-			return false
-		}
-	case tokentype.STRING:
-		if right.str != left.str {
-			return false
-		}
-	}
-
-	// otherwise if the kind matches (true, false, null etc)
-	return true
-
+func (l Literal) Evaluate() (object.Object, error) {
+	return l.value, nil
 }
 
 // Unary
@@ -94,11 +43,9 @@ type Unary struct {
 func NewUnary(operator token.Token, right Expr) *Unary {
 	return &Unary{operator, right}
 }
-func (u Unary) accept() string {
-	return "( " + u.operator.GetLexeme() + u.right.accept() + " )"
-}
-func (u Unary) evaluate() (Literal, error) {
-	right, err := u.right.evaluate()
+
+func (u Unary) Evaluate() (object.Object, error) {
+	right, err := u.right.Evaluate()
 
 	if err != nil {
 		return right, err
@@ -107,22 +54,28 @@ func (u Unary) evaluate() (Literal, error) {
 	switch u.operator.GetType() {
 	case tokentype.BANG:
 		// if the value is true -> return false
-		if right.isTruthy() {
-			return *NewLiteral(tokentype.FALSE), nil
+		if right.Bool() {
+			return *object.NewObject(tokentype.FALSE, nil), nil
 		} else {
 			// true -> false
-			return *NewLiteral(tokentype.TRUE), nil
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
 	case tokentype.MINUS:
 		// negate number
-		if right.kind == tokentype.NUMBER {
-			return *NewNumber(-1 * right.num), nil
+		if right.GetKind() == tokentype.NUMBER {
+			val, ok := right.GetLiteral().(float64)
+
+			if !ok {
+				fmt.Println("Implementation Error: Failed to parse float form number in expr -> unary -> Evaluate")
+				os.Exit(6)
+			}
+			return *object.NewObject(tokentype.NUMBER, -1*val), nil
 		}
 	}
 
 	// Report error
 	fault.RuntimeError("Eval Error: illegal unary operator", u.operator)
-	return Literal{}, errors.New("illegal unary operator")
+	return object.Object{}, errors.New("illegal unary operator")
 }
 
 // Binary
@@ -135,18 +88,15 @@ type Binary struct {
 func NewBinary(left Expr, operator token.Token, right Expr) *Binary {
 	return &Binary{left, operator, right}
 }
-func (b Binary) accept() string {
-	return "(" + b.operator.GetLexeme() + b.left.accept() + b.right.accept() + ")"
-}
-func (b Binary) evaluate() (Literal, error) {
-	right, err := b.right.evaluate()
+func (b Binary) Evaluate() (object.Object, error) {
+	right, err := b.right.Evaluate()
 
 	// Cascade error
 	if err != nil {
 		return right, err
 	}
 
-	left, err := b.left.evaluate()
+	left, err := b.left.Evaluate()
 
 	// Cascade error
 	if err != nil {
@@ -155,68 +105,83 @@ func (b Binary) evaluate() (Literal, error) {
 
 	// check equality
 	if b.operator.GetType() == tokentype.EQUALS {
-		if left.isEqual(right) {
-			return *NewLiteral(tokentype.TRUE), nil
+		if left.Equal(&right) {
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
-		return *NewLiteral(tokentype.FALSE), nil
+		return *object.NewObject(tokentype.FALSE, nil), nil
 	}
 	if b.operator.GetType() == tokentype.NOT_EQUALS {
-		if !left.isEqual(right) {
-			return *NewLiteral(tokentype.TRUE), nil
+		if !left.Equal(&right) {
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
-		return *NewLiteral(tokentype.FALSE), nil
+		return *object.NewObject(tokentype.FALSE, nil), nil
 	}
 
 	// Report type missmatch for non equality tests
-	if right.kind != left.kind {
-		fault.RuntimeError("Eval Error: type mismatch between "+left.kind.String()+" and "+right.kind.String(), b.operator)
-		return Literal{}, errors.New("type mismatch in binary operation")
+	if right.GetKind() != left.GetKind() {
+		fault.RuntimeError("Eval Error: type mismatch between "+left.GetKindStr()+" and "+right.GetKindStr(), b.operator)
+		return object.Object{}, errors.New("type mismatch in binary operation")
 	}
 
 	// String concatenation
-	if right.kind == tokentype.STRING && b.operator.GetType() == tokentype.PLUS {
-		return *NewString(left.str + right.str), nil
+	if right.GetKind() == tokentype.STRING && b.operator.GetType() == tokentype.PLUS {
+		l_str, l_ok := left.GetLiteral().(string)
+		r_str, r_ok := right.GetLiteral().(string)
+
+		if l_ok && r_ok {
+			return *object.NewObject(tokentype.STRING, l_str+r_str), nil
+		}
+
+		fmt.Println("Implementation Error: Could not parse string passed in expr -> binary -> Evaluate")
+		os.Exit(7)
 	}
 
 	// Report invalid non-numeric operations
-	if right.kind != tokentype.NUMBER {
+	if right.GetKind() != tokentype.NUMBER {
 		fault.RuntimeError("Eval Error: invalid binary non-numeric operation", b.operator)
-		return Literal{}, errors.New("invalid binary operation on non-numeric")
+		return object.Object{}, errors.New("invalid binary operation on non-numeric")
+	}
+	l_num, l_ok := left.GetLiteral().(float64)
+	r_num, r_ok := right.GetLiteral().(float64)
+
+	if !l_ok || !r_ok {
+		fmt.Println("Implementation Error: Could not parse numbers passed in expr -> binary -> Evaluate")
+		os.Exit(8)
 	}
 
 	switch b.operator.GetType() {
 	case tokentype.PLUS:
-		return *NewNumber(left.num + right.num), nil
+		return *object.NewObject(tokentype.NUMBER, l_num+r_num), nil
 	case tokentype.MINUS:
-		return *NewNumber(left.num - right.num), nil
+		return *object.NewObject(tokentype.NUMBER, l_num-r_num), nil
 	case tokentype.SLASH:
-		return *NewNumber(left.num / right.num), nil
+		return *object.NewObject(tokentype.NUMBER, l_num/r_num), nil
 	case tokentype.STAR:
-		return *NewNumber(left.num * right.num), nil
+		return *object.NewObject(tokentype.NUMBER, l_num*r_num), nil
 	case tokentype.GREATER:
-		if left.num > right.num {
-			return *NewLiteral(tokentype.TRUE), nil
+		if l_num > r_num {
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
-		return *NewLiteral(tokentype.FALSE), nil
+		return *object.NewObject(tokentype.FALSE, nil), nil
 	case tokentype.GREATER_EQUAL:
-		if left.num >= right.num {
-			return *NewLiteral(tokentype.TRUE), nil
+		if l_num >= r_num {
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
-		return *NewLiteral(tokentype.FALSE), nil
+		return *object.NewObject(tokentype.FALSE, nil), nil
 	case tokentype.LESS:
-		if left.num < right.num {
-			return *NewLiteral(tokentype.TRUE), nil
+		if l_num < r_num {
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
-		return *NewLiteral(tokentype.FALSE), nil
+		return *object.NewObject(tokentype.FALSE, nil), nil
 	case tokentype.LESS_EQUAL:
-		if left.num <= right.num {
-			return *NewLiteral(tokentype.TRUE), nil
+		if l_num <= r_num {
+			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
-		return *NewLiteral(tokentype.FALSE), nil
+		return *object.NewObject(tokentype.FALSE, nil), nil
 	}
 
 	fault.RuntimeError("Eval Error: illegal binary operator", b.operator)
-	return Literal{}, errors.New("illegal binary operator")
+	return object.Object{}, errors.New("illegal binary operator")
 }
 
 // Grouping
@@ -227,35 +192,17 @@ type Grouping struct {
 func NewGrouping(expression Expr) *Grouping {
 	return &Grouping{expression}
 }
-func (g Grouping) accept() string {
-	return "( group " + g.expression.accept() + ")"
-}
-func (g Grouping) evaluate() (Literal, error) {
-	return g.expression.evaluate()
-}
-
-// Print the Abstract Syntax Tree
-func ASTPrinter(e Expr) string {
-	return e.accept()
+func (g Grouping) Evaluate() (object.Object, error) {
+	return g.expression.Evaluate()
 }
 
 func Interpret(e Expr) {
-	literal, err := e.evaluate()
+	obj, err := e.Evaluate()
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	if literal.kind == tokentype.NUMBER {
-		fmt.Println(literal.num)
-		return
-	}
-
-	if literal.kind == tokentype.STRING {
-		fmt.Println(literal.str)
-		return
-	}
-
-	fmt.Println(literal.kind.String())
+	fmt.Println(obj.String())
 }

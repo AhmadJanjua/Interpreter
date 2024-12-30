@@ -1,8 +1,8 @@
 package almond
 
 import (
-	"Interpreter/expr"
 	"Interpreter/fault"
+	"Interpreter/interpreter"
 	"Interpreter/parser"
 	"Interpreter/tokenizer"
 	"bufio"
@@ -21,7 +21,7 @@ func run(line string) {
 		return
 	}
 
-	expr.Interpret(expression)
+	interpreter.Interpret(expression)
 }
 
 // Run the code from a file
