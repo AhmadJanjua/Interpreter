@@ -6,7 +6,6 @@ import (
 	"Interpreter/object"
 	"Interpreter/token"
 	"Interpreter/tokentype"
-	"errors"
 	"fmt"
 )
 
@@ -23,15 +22,10 @@ func NewBlock(s []Stmt) *Block {
 }
 
 func (b Block) Evaluate(e *environment.Environment) error {
-	previous := e.Copy()
-	defer func() {
-		e = previous
-	}()
-
-	env := environment.NewEnclosedEnv(e)
+	block_env := environment.NewEnclosedEnv(e)
 
 	for _, statement := range b.statements {
-		err := statement.Evaluate(env)
+		err := statement.Evaluate(block_env)
 		if err != nil {
 			return err
 		}
@@ -49,7 +43,9 @@ func NewExpression(e expr.Expr) *Expression {
 }
 
 func (x Expression) Evaluate(e *environment.Environment) error {
-	return errors.New("err expression statement")
+	_, err := x.expression.Evaluate(e)
+
+	return err
 }
 
 type Print struct {
@@ -93,6 +89,73 @@ func (v Var) Evaluate(e *environment.Environment) error {
 	}
 
 	e.Define(v.name.GetLexeme(), value)
+
+	return nil
+}
+
+type If struct {
+	condition   expr.Expr
+	then_branch Stmt
+	else_branch Stmt
+}
+
+func NewIf(c expr.Expr, t Stmt, e Stmt) *If {
+	return &If{c, t, e}
+}
+
+func (i If) Evaluate(e *environment.Environment) error {
+	cond, err := i.condition.Evaluate(e)
+
+	if err != nil {
+		return err
+	}
+
+	if cond.Bool() {
+		err = i.then_branch.Evaluate(e)
+
+		if err != nil {
+			return err
+		}
+
+	} else if i.else_branch != nil {
+		err = i.else_branch.Evaluate(e)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type While struct {
+	condition expr.Expr
+	body      Stmt
+}
+
+func NewWhile(c expr.Expr, b Stmt) *While {
+	return &While{c, b}
+}
+
+func (w While) Evaluate(e *environment.Environment) error {
+	val, err := w.condition.Evaluate(e)
+
+	if err != nil {
+		return err
+	}
+
+	for val.Bool() {
+		err = w.body.Evaluate(e)
+
+		if err != nil {
+			return err
+		}
+
+		val, err = w.condition.Evaluate(e)
+
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

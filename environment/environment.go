@@ -58,18 +58,3 @@ func (e *Environment) Assign(tok token.Token, value object.Object) error {
 	fault.RuntimeError("Undefined variable '"+name+"'.", tok)
 	return errors.New("undefined variable error")
 }
-
-func (e *Environment) Copy() *Environment {
-	new_lut := make(map[string]object.Object)
-	for k, v := range e.lut {
-		new_lut[k] = v
-	}
-	var enclosing *Environment
-	if e.enclosing != nil {
-		enclosing = e.enclosing.Copy()
-	}
-	return &Environment{
-		enclosing: enclosing,
-		lut:       new_lut,
-	}
-}

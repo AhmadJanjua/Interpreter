@@ -4,6 +4,7 @@ import (
 	"Interpreter/tokentype"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Object struct {
@@ -104,7 +105,7 @@ func (o *Object) String() string {
 			fmt.Println("Implementation Error: failed to extract number from type Number Object.")
 			os.Exit(9)
 		}
-		return fmt.Sprintf("%f", f)
+		return strconv.FormatFloat(f, 'f', -1, 64)
 	default:
 		return o.kind.String()
 	}

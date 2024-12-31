@@ -228,9 +228,43 @@ func (a Assign) Evaluate(e *environment.Environment) (object.Object, error) {
 	value, err := a.value.Evaluate(e)
 
 	if err != nil {
+		return value, err
+	}
+
+	err = e.Assign(a.name, value)
+
+	if err != nil {
 		return object.Object{}, err
 	}
 
-	e.Assign(a.name, value)
 	return value, nil
+}
+
+type Logical struct {
+	left     Expr
+	operator token.Token
+	right    Expr
+}
+
+func NewLogical(left Expr, operator token.Token, right Expr) *Logical {
+	return &Logical{left, operator, right}
+}
+
+func (a Logical) Evaluate(e *environment.Environment) (object.Object, error) {
+	left, err := a.left.Evaluate(e)
+
+	if err != nil {
+		return left, err
+	}
+
+	if a.operator.GetType() == tokentype.OR {
+		if left.Bool() {
+			return left, nil
+		}
+	} else {
+		if !left.Bool() {
+			return left, nil
+		}
+	}
+	return a.right.Evaluate(e)
 }

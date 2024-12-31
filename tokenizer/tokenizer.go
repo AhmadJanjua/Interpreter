@@ -12,7 +12,7 @@ var keyword_map = map[string]tokentype.TokenType{
 	"class":  tokentype.CLASS,
 	"fn":     tokentype.FN,
 	"return": tokentype.RETURN,
-	"auto":   tokentype.AUTO,
+	"var":    tokentype.AUTO,
 	"if":     tokentype.IF,
 	"else":   tokentype.ELSE,
 	"true":   tokentype.TRUE,
