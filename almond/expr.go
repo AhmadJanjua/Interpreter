@@ -10,7 +10,7 @@ type Expr interface {
 	Evaluate(e *Environment) (Object, error)
 }
 
-// Literals
+// LITERAL EXPRESSION + HELPERS
 type Literal struct {
 	value Object
 }
@@ -30,7 +30,7 @@ func (l Literal) Evaluate(e *Environment) (Object, error) {
 	return l.value, nil
 }
 
-// UnaryExpr
+// UNARY EXPRESSION
 type UnaryExpr struct {
 	operator Token
 	right    Expr
@@ -74,7 +74,7 @@ func (u UnaryExpr) Evaluate(e *Environment) (Object, error) {
 	return Object{}, errors.New("illegal unary operator")
 }
 
-// BinaryExpr
+// BINARY EXPRESSION
 type BinaryExpr struct {
 	left     Expr
 	operator Token
@@ -180,7 +180,7 @@ func (b BinaryExpr) Evaluate(e *Environment) (Object, error) {
 	return Object{}, errors.New("illegal binary operator")
 }
 
-// GroupingExpr
+// GROUPING EXPRESSION
 type GroupingExpr struct {
 	expression Expr
 }
@@ -192,7 +192,7 @@ func (g GroupingExpr) Evaluate(e *Environment) (Object, error) {
 	return g.expression.Evaluate(e)
 }
 
-// Variable
+// VARIABLE EXPRESSION
 type VarExpr struct {
 	name Token
 }
@@ -209,7 +209,7 @@ func (v VarExpr) Evaluate(e *Environment) (Object, error) {
 	return e.Get(v.name)
 }
 
-// Assignment
+// ASSIGNMENT EXPRESSION
 type AssignExpr struct {
 	name  Token
 	value Expr
@@ -235,6 +235,7 @@ func (a AssignExpr) Evaluate(e *Environment) (Object, error) {
 	return value, nil
 }
 
+// LOGICAL EXPRESSION
 type LogicalExpr struct {
 	left     Expr
 	operator Token

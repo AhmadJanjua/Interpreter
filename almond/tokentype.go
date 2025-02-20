@@ -103,9 +103,36 @@ var tokenTypeNames = map[TokenType]string{
 	EOF:    "EOF",
 }
 
+// Look-up table: string -> TokenType
+var keywordMap = map[string]TokenType{
+	"class":  CLASS,
+	"fn":     FN,
+	"return": RETURN,
+	"var":    AUTO,
+	"if":     IF,
+	"else":   ELSE,
+	"true":   TRUE,
+	"false":  FALSE,
+	"for":    FOR,
+	"while":  WHILE,
+	"print":  PRINT,
+	"super":  SUPER,
+	"this":   THIS,
+	"null":   NULL,
+}
+
 func (t TokenType) String() string {
 	if name, ok := tokenTypeNames[t]; ok {
 		return name
 	}
 	return "<ERROR>"
+}
+
+func TokenTypeLUT(text string) TokenType {
+	tokType, ok := keywordMap[text]
+	if ok {
+		return tokType
+	} else {
+		return IDENTIFIER
+	}
 }

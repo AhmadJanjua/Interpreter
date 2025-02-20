@@ -8,6 +8,22 @@ type Stmt interface {
 	Evaluate(e *Environment) error
 }
 
+// EXPRESSION STATEMENTS
+type ExprStmt struct {
+	expression Expr
+}
+
+func NewExprStmt(e Expr) *ExprStmt {
+	return &ExprStmt{e}
+}
+
+func (x ExprStmt) Evaluate(e *Environment) error {
+	_, err := x.expression.Evaluate(e)
+
+	return err
+}
+
+// BLOCK STATMENTS
 type BlockStmt struct {
 	statements []Stmt
 }
@@ -29,20 +45,7 @@ func (b BlockStmt) Evaluate(e *Environment) error {
 	return nil
 }
 
-type ExprStmt struct {
-	expression Expr
-}
-
-func NewExprStmt(e Expr) *ExprStmt {
-	return &ExprStmt{e}
-}
-
-func (x ExprStmt) Evaluate(e *Environment) error {
-	_, err := x.expression.Evaluate(e)
-
-	return err
-}
-
+// PRINT STATEMENTS
 type PrintStmt struct {
 	expression Expr
 }
@@ -62,32 +65,7 @@ func (p PrintStmt) Evaluate(e *Environment) error {
 	return nil
 }
 
-type VarStmt struct {
-	name        Token
-	initializer Expr
-}
-
-func NewVarStmt(n Token, i Expr) *VarStmt {
-	return &VarStmt{n, i}
-}
-
-func (v VarStmt) Evaluate(e *Environment) error {
-	if v.initializer == nil {
-		e.Define(v.name.GetLexeme(), *NewObject(NULL, nil))
-		return nil
-	}
-
-	value, err := v.initializer.Evaluate(e)
-
-	if err != nil {
-		return err
-	}
-
-	e.Define(v.name.GetLexeme(), value)
-
-	return nil
-}
-
+// CONDITION STATEMENTS
 type IfStmt struct {
 	condition  Expr
 	thenBranch Stmt
@@ -122,6 +100,7 @@ func (i IfStmt) Evaluate(e *Environment) error {
 	return nil
 }
 
+// LOOPS FOR|WHILE
 type WhileStmt struct {
 	condition Expr
 	body      Stmt
@@ -151,6 +130,33 @@ func (w WhileStmt) Evaluate(e *Environment) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+// VARIABLE STATEMENTS
+type VarStmt struct {
+	name        Token
+	initializer Expr
+}
+
+func NewVarStmt(n Token, i Expr) *VarStmt {
+	return &VarStmt{n, i}
+}
+
+func (v VarStmt) Evaluate(e *Environment) error {
+	if v.initializer == nil {
+		e.Define(v.name.GetLexeme(), *NewObject(NULL, nil))
+		return nil
+	}
+
+	value, err := v.initializer.Evaluate(e)
+
+	if err != nil {
+		return err
+	}
+
+	e.Define(v.name.GetLexeme(), value)
 
 	return nil
 }

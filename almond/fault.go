@@ -13,7 +13,7 @@ func report(line int, where, message string) {
 	HadFault = true
 }
 
-// report errors using tokens
+// Report errors using tokens
 func TokenError(token Token, message string) {
 	if token.GetType() == EOF {
 		report(token.GetLine(), " at end", message)

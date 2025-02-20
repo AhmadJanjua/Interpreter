@@ -11,7 +11,7 @@ type Object struct {
 	literal any
 }
 
-// Create object and ensure types are managed correctly
+// Ctor
 func NewObject(k TokenType, v any) *Object {
 	switch k {
 	case STRING:
@@ -34,7 +34,7 @@ func NewObject(k TokenType, v any) *Object {
 	}
 }
 
-// Get the truth value of an object
+// -- Truth value helpers
 func (o *Object) Bool() bool {
 	// 0, null, false
 	switch o.kind {
@@ -57,7 +57,6 @@ func (o *Object) Bool() bool {
 	// all other values are true
 	return true
 }
-
 func (left *Object) Equal(right *Object) bool {
 	if left.kind != right.kind {
 		return false
@@ -75,6 +74,7 @@ func (left *Object) Equal(right *Object) bool {
 	return true
 }
 
+// -- Data retrieval helpers
 func (o *Object) GetKind() TokenType {
 	return o.kind
 }
@@ -87,6 +87,7 @@ func (o *Object) GetLiteral() any {
 	return o.literal
 }
 
+// -- Formatting helpers
 func (o *Object) String() string {
 	switch o.kind {
 	case STRING:

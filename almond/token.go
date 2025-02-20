@@ -12,7 +12,7 @@ type Token struct {
 	line   int
 }
 
-// Constructor
+// Ctor
 func NewToken(kind TokenType, lexeme string, literal string, line int) *Token {
 	// Based on the token type create the literal
 	var obj Object

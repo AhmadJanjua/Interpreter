@@ -4,24 +4,6 @@ import (
 	"unicode"
 )
 
-// Look-up table: string -> TokenType
-var keywordMap = map[string]TokenType{
-	"class":  CLASS,
-	"fn":     FN,
-	"return": RETURN,
-	"var":    AUTO,
-	"if":     IF,
-	"else":   ELSE,
-	"true":   TRUE,
-	"false":  FALSE,
-	"for":    FOR,
-	"while":  WHILE,
-	"print":  PRINT,
-	"super":  SUPER,
-	"this":   THIS,
-	"null":   NULL,
-}
-
 // Helper to check characters for identifer
 func validIdentifier(c rune) bool {
 	return unicode.IsLetter(c) || unicode.IsNumber(c) || c == '_'
@@ -90,12 +72,8 @@ func (s *Tokenizer) processIdentifier() {
 	}
 
 	text := s.source[s.start:s.current]
-	tokType, ok := keywordMap[text]
-	if ok {
-		s.addToken(tokType, "")
-	} else {
-		s.addToken(IDENTIFIER, "")
-	}
+	tokType := TokenTypeLUT(text)
+	s.addToken(tokType, "")
 }
 
 // Parse int or decimal number
