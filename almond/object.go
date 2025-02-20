@@ -131,3 +131,7 @@ func (o *Object) String() string {
 		return o.kind.String()
 	}
 }
+
+func (o *Object) Error() string {
+	return "object error in: " + o.String()
+}

@@ -76,6 +76,28 @@ func (p *Parser) printStmt() (Stmt, error) {
 	return *NewPrintStmt(value), nil
 }
 
+func (p *Parser) returnStmt() (Stmt, error) {
+	keyword := p.previous()
+	var value Expr = nil
+	var err error = nil
+
+	if !p.check(SEMI_COLON) {
+		value, err = p.expression()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = p.consume(SEMI_COLON, "expected ; after return value")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewReturnStmt(*keyword, value), nil
+}
+
 // evaluate whole statment
 func (p *Parser) whileStmt() (Stmt, error) {
 	_, err := p.consume(L_PAREN, "Expect '(' after while.")
@@ -227,6 +249,9 @@ func (p *Parser) statement() (Stmt, error) {
 	}
 	if p.match(WHILE) {
 		return p.whileStmt()
+	}
+	if p.match(RETURN) {
+		return p.returnStmt()
 	}
 	if p.match(PRINT) {
 		return p.printStmt()

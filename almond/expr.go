@@ -307,5 +307,5 @@ func (c CallExpr) Evaluate(e *Environment) (Object, error) {
 			function.Arity(), len(args))
 	}
 
-	return function.Call(args)
+	return function.Call(*e, args)
 }

@@ -11,9 +11,19 @@ type Environment struct {
 
 // Ctor
 func NewEnv() *Environment {
+	// Create global functions
 	lut := map[string]Object{}
-	thisEnv := Environment{nil, lut}
-	return &thisEnv
+	env := Environment{nil, lut}
+
+	// Global clock
+	clockObj := NewObject(CALLABLE, NewNativeClock())
+	env.Define("clock", *clockObj)
+
+	// Global clock
+	sleepObj := NewObject(CALLABLE, NewNativeSleep())
+	env.Define("sleepMS", *sleepObj)
+
+	return NewEnclosedEnv(&env)
 }
 
 // Ctor with existing env

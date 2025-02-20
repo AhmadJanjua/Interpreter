@@ -134,6 +134,31 @@ func (w WhileStmt) Evaluate(e *Environment) error {
 	return nil
 }
 
+// RETURN STATEMENTS
+type ReturnStmt struct {
+	keyword Token
+	value   Expr
+}
+
+func NewReturnStmt(key Token, val Expr) *ReturnStmt {
+	return &ReturnStmt{key, val}
+}
+
+func (r ReturnStmt) Evaluate(e *Environment) error {
+	value := *NewObject(NULL, nil)
+	var err error = nil
+
+	if r.value != nil {
+		value, err = r.value.Evaluate(e)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return &value
+}
+
 // FUNCTION STATEMENTS
 type FnStmt struct {
 	name   Token
@@ -145,9 +170,9 @@ func NewFnStmt(n Token, p []Token, b []Stmt) *FnStmt {
 	return &FnStmt{n, p, b}
 }
 
-func (v FnStmt) Evaluate(e *Environment) error {
-	function := NewFunctionCall(v)
-	e.Define(v.name.lexeme, *NewObject(CALLABLE, function))
+func (f FnStmt) Evaluate(e *Environment) error {
+	function := NewFunctionCall(f)
+	e.Define(f.name.lexeme, *NewObject(CALLABLE, function))
 	return nil
 }
 
