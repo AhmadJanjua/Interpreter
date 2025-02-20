@@ -245,7 +245,63 @@ func (p *Parser) statement() (Stmt, error) {
 
 }
 
-// assign valuee to identifier
+// assign function to identifier
+func (p *Parser) fnStmt(kind string) (Stmt, error) {
+	// Get name
+	name, err := p.consume(IDENTIFIER, "Expected "+kind+" name")
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter first parenthesis
+	_, err = p.consume(L_PAREN, "Expected '(' after "+kind+" name")
+
+	if err != nil {
+		return nil, err
+	}
+
+	var params []Token
+
+	// Get arguments
+	if !p.check(R_PAREN) {
+		for ok := true; ok; ok = p.match(COMMA) {
+			if len(params) >= 255 {
+				TokenError(*p.peek(), "cannot have more than 255 args")
+			}
+
+			param, err := p.consume(IDENTIFIER, "expected parameter name")
+
+			if err != nil {
+				return nil, err
+			}
+
+			params = append(params, *param)
+		}
+	}
+
+	_, err = p.consume(R_PAREN, "Expected ')' after args")
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = p.consume(L_BRACE, "Expected '{' before body")
+
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := p.blockStmt()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return *NewFnStmt(*name, params, body), nil
+}
+
+// assign value to identifier
 func (p *Parser) varStmt() (Stmt, error) {
 	name, err := p.consume(IDENTIFIER, "Expected variable name.")
 
@@ -278,7 +334,9 @@ func (p *Parser) declarationStmt() Stmt {
 	var statement Stmt
 	var err error
 
-	if p.match(AUTO) {
+	if p.match(FN) {
+		statement, err = p.fnStmt("function")
+	} else if p.match(AUTO) {
 		statement, err = p.varStmt()
 	} else {
 		statement, err = p.statement()
@@ -347,6 +405,61 @@ func (p *Parser) primaryExpr() (Expr, error) {
 	return NewLiteral(p.peek().GetType()), errors.New("Parser Error: unknown literal in primary")
 }
 
+// helper function to deal with calls
+func (p *Parser) finishCall(callee Expr) (Expr, error) {
+	var arguments []Expr
+
+	if !p.check(R_PAREN) {
+		for ok := true; ok; ok = p.match(COMMA) {
+			expr, err := p.expression()
+
+			if err != nil {
+				return expr, err
+			}
+
+			// limit max arguments
+			if len(arguments) >= 255 {
+				return nil, errors.New("cannot exceed more than 255 arguments")
+			}
+
+			arguments = append(arguments, expr)
+		}
+	}
+
+	paren, err := p.consume(R_PAREN, "expected ')' at the end of a call")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCallExpr(callee, *paren, arguments), nil
+}
+
+// evaluates to a call expression
+func (p *Parser) callExpr() (Expr, error) {
+	expr, err := p.primaryExpr()
+
+	if err != nil {
+		return expr, err
+	}
+
+	// check if this is a call
+	for {
+		if p.match(L_PAREN) {
+			// get all the arguments
+			expr, err = p.finishCall(expr)
+
+			if err != nil {
+				return expr, err
+			}
+		} else {
+			break
+		}
+	}
+
+	return expr, nil
+}
+
 // evaluate to a unary expression
 func (p *Parser) unaryExpr() (Expr, error) {
 	if p.match(BANG, MINUS) {
@@ -361,7 +474,7 @@ func (p *Parser) unaryExpr() (Expr, error) {
 		return NewUnaryExpr(*operator, right), nil
 	}
 
-	return p.primaryExpr()
+	return p.callExpr()
 }
 
 // evaluate to binary expression

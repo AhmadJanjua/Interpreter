@@ -134,6 +134,23 @@ func (w WhileStmt) Evaluate(e *Environment) error {
 	return nil
 }
 
+// FUNCTION STATEMENTS
+type FnStmt struct {
+	name   Token
+	params []Token
+	body   []Stmt
+}
+
+func NewFnStmt(n Token, p []Token, b []Stmt) *FnStmt {
+	return &FnStmt{n, p, b}
+}
+
+func (v FnStmt) Evaluate(e *Environment) error {
+	function := NewFunctionCall(v)
+	e.Define(v.name.lexeme, *NewObject(CALLABLE, function))
+	return nil
+}
+
 // VARIABLE STATEMENTS
 type VarStmt struct {
 	name        Token

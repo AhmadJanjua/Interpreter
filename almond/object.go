@@ -29,6 +29,17 @@ func NewObject(k TokenType, v any) *Object {
 			os.Exit(2)
 		}
 		return &Object{k, val}
+
+	case CALLABLE:
+		val, ok := v.(Callable)
+
+		if !ok {
+			fmt.Printf("%T", v)
+			fmt.Println("Implmentation Error: Created a function object and passed non-callable value.")
+			os.Exit(3)
+		}
+		return &Object{k, val}
+
 	default:
 		return &Object{k, nil}
 	}
@@ -106,6 +117,16 @@ func (o *Object) String() string {
 			os.Exit(9)
 		}
 		return strconv.FormatFloat(f, 'f', -1, 64)
+
+	case CALLABLE:
+		f, ok := o.literal.(Callable)
+
+		if !ok {
+			fmt.Println("Implementation Error: failed to get Callable from function")
+			os.Exit(10)
+		}
+		return f.ToString()
+
 	default:
 		return o.kind.String()
 	}

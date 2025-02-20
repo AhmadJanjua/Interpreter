@@ -50,6 +50,9 @@ const (
 	THIS
 	NULL
 	EOF
+
+	// Internal usage
+	CALLABLE
 )
 
 // TokenType to string mapping

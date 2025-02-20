@@ -264,3 +264,48 @@ func (a LogicalExpr) Evaluate(e *Environment) (Object, error) {
 	}
 	return a.right.Evaluate(e)
 }
+
+// CALL EXPRESSION
+type CallExpr struct {
+	callee    Expr
+	paren     Token
+	arguments []Expr
+}
+
+func NewCallExpr(c Expr, p Token, a []Expr) *CallExpr {
+	return &CallExpr{c, p, a}
+}
+
+func (c CallExpr) Evaluate(e *Environment) (Object, error) {
+	callee, err := c.callee.Evaluate(e)
+
+	if err != nil {
+		return Object{}, nil
+	}
+
+	var args []Object
+
+	for _, argument := range c.arguments {
+		obj, err2 := argument.Evaluate(e)
+
+		if err2 != nil {
+			return obj, err2
+		}
+
+		args = append(args, obj)
+	}
+
+	function, ok := callee.literal.(Callable)
+
+	if !ok {
+		return Object{}, errors.New("type was not of a callable type")
+	}
+
+	if function.Arity() != len(args) {
+		return Object{}, fmt.Errorf(
+			"expected %v arguments, but recieved %v",
+			function.Arity(), len(args))
+	}
+
+	return function.Call(args)
+}
