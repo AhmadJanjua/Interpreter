@@ -1,12 +1,16 @@
 # Usage
 In root directory run:
+```
    go run main.go
    go run main.go <filename>
+```
 or
 Build
+```
   go build main.go
   ./main.exe
   ./main.exe <filename>
+```
 
 # Example Code:
 ```
