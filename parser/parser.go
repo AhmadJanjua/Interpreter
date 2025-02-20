@@ -17,8 +17,8 @@ type Parser struct {
 
 // Constructor for parser
 func NewParser(tokens []token.Token) *Parser {
-	this_parser := Parser{tokens, 0}
-	return &this_parser
+	thisParser := Parser{tokens, 0}
+	return &thisParser
 }
 
 // Get current token
@@ -45,18 +45,18 @@ func (p *Parser) advance() *token.Token {
 }
 
 // Report if the current token matches provided token
-func (p *Parser) check(tok_type tokentype.TokenType) bool {
+func (p *Parser) check(tokType tokentype.TokenType) bool {
 	if p.isAtEnd() {
 		return false
 	}
 
-	return p.peek().GetType() == tok_type
+	return p.peek().GetType() == tokType
 }
 
 // Report if the current token matches the list of tokens
-func (p *Parser) match(tok_types ...tokentype.TokenType) bool {
-	for _, tok_type := range tok_types {
-		if p.check(tok_type) {
+func (p *Parser) match(tokTypes ...tokentype.TokenType) bool {
+	for _, tokType := range tokTypes {
+		if p.check(tokType) {
 			p.advance()
 			return true
 		}
@@ -66,14 +66,14 @@ func (p *Parser) match(tok_types ...tokentype.TokenType) bool {
 }
 
 // Report the error
-func (p *Parser) consume(tok_type tokentype.TokenType, message string) (*token.Token, error) {
-	if p.check(tok_type) {
+func (p *Parser) consume(tokType tokentype.TokenType, message string) (*token.Token, error) {
+	if p.check(tokType) {
 		return p.advance(), nil
 	}
 
 	fault.TokenError(*p.peek(), message)
 
-	return &token.Token{}, errors.New("Parser Error: issue occured while parsing token: " + tok_type.String())
+	return &token.Token{}, errors.New("Parser Error: issue occured while parsing token: " + tokType.String())
 }
 
 // In the case of an error advance tokens to get fresh start
@@ -396,24 +396,24 @@ func (p *Parser) ifStmt() (stmt.Stmt, error) {
 
 	p.consume(tokentype.R_PAREN, "Expected ')' after if condition")
 
-	then_branch, err := p.statement()
+	thenBranch, err := p.statement()
 
 	if err != nil {
 		return nil, err
 	}
 
-	var else_branch stmt.Stmt
-	else_branch = nil
+	var elseBranch stmt.Stmt
+	elseBranch = nil
 
 	if p.match(tokentype.ELSE) {
-		else_branch, err = p.statement()
+		elseBranch, err = p.statement()
 
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return *stmt.NewIf(condition, then_branch, else_branch), nil
+	return *stmt.NewIf(condition, thenBranch, elseBranch), nil
 }
 
 func (p *Parser) whileStmt() (stmt.Stmt, error) {

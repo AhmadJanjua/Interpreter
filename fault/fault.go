@@ -6,13 +6,13 @@ import (
 	"fmt"
 )
 
-var Had_fault bool = false
-var Had_runtime_fault bool = false
+var HadFault bool = false
+var HadRuntimeFault bool = false
 
 // Helper to format error
 func report(line int, where, message string) {
 	fmt.Printf("[line %d] Error%s: %s\n", line, where, message)
-	Had_fault = true
+	HadFault = true
 }
 
 // report errors using tokens
@@ -32,5 +32,5 @@ func Error(line int, message string) {
 // Runtime Error
 func RuntimeError(message string, tok token.Token) {
 	fmt.Printf("%s\n[line %d] ", message, tok.GetLine())
-	Had_runtime_fault = true
+	HadRuntimeFault = true
 }

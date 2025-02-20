@@ -22,10 +22,10 @@ func NewBlock(s []Stmt) *Block {
 }
 
 func (b Block) Evaluate(e *environment.Environment) error {
-	block_env := environment.NewEnclosedEnv(e)
+	blockEnv := environment.NewEnclosedEnv(e)
 
 	for _, statement := range b.statements {
-		err := statement.Evaluate(block_env)
+		err := statement.Evaluate(blockEnv)
 		if err != nil {
 			return err
 		}
@@ -94,9 +94,9 @@ func (v Var) Evaluate(e *environment.Environment) error {
 }
 
 type If struct {
-	condition   expr.Expr
-	then_branch Stmt
-	else_branch Stmt
+	condition  expr.Expr
+	thenBranch Stmt
+	elseBranch Stmt
 }
 
 func NewIf(c expr.Expr, t Stmt, e Stmt) *If {
@@ -111,14 +111,14 @@ func (i If) Evaluate(e *environment.Environment) error {
 	}
 
 	if cond.Bool() {
-		err = i.then_branch.Evaluate(e)
+		err = i.thenBranch.Evaluate(e)
 
 		if err != nil {
 			return err
 		}
 
-	} else if i.else_branch != nil {
-		err = i.else_branch.Evaluate(e)
+	} else if i.elseBranch != nil {
+		err = i.elseBranch.Evaluate(e)
 
 		if err != nil {
 			return err

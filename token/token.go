@@ -36,8 +36,8 @@ func NewToken(kind tokentype.TokenType, lexeme string, literal string, line int)
 		obj = *object.NewObject(kind, nil)
 	}
 
-	this_token := Token{obj, lexeme, line}
-	return &this_token
+	thisToken := Token{obj, lexeme, line}
+	return &thisToken
 }
 
 // Get the token type

@@ -52,96 +52,60 @@ const (
 	EOF
 )
 
-func (t *TokenType) String() string {
-	switch *t {
+// TokenType to string mapping
+var tokenTypeNames = map[TokenType]string{
 	// Single characters
-	case L_PAREN:
-		return "Left Parenthesis"
-	case R_PAREN:
-		return "Right Parenthesis"
-	case L_BRACE:
-		return "Left Brace"
-	case R_BRACE:
-		return "Right Brace"
-	case COMMA:
-		return "Comma"
-	case PERIOD:
-		return "Period"
-	case MINUS:
-		return "Minus"
-	case PLUS:
-		return "Plus"
-	case STAR:
-		return "Star"
-	case SLASH:
-		return "Slash"
-	case ASSIGNMENT:
-		return "Assignment"
-	case BANG:
-		return "Bang"
-	case GREATER:
-		return "Greater"
-	case LESS:
-		return "Less"
-	case SEMI_COLON:
-		return "Semi-Colon"
-	case HASH:
-		return "Hash"
-	case AND:
-		return "And"
-	case OR:
-		return "Or"
+	L_PAREN:    "L_PAREN",
+	R_PAREN:    "R_PAREN",
+	L_BRACE:    "L_BRACE",
+	R_BRACE:    "R_BRACE",
+	COMMA:      "COMMA",
+	PERIOD:     "PERIOD",
+	MINUS:      "MINUS",
+	PLUS:       "PLUS",
+	STAR:       "STAR",
+	SLASH:      "SLASH",
+	ASSIGNMENT: "ASSIGNMENT",
+	BANG:       "BANG",
+	GREATER:    "GREATER",
+	LESS:       "LESS",
+	SEMI_COLON: "SEMI_COLON",
+	HASH:       "HASH",
+	AND:        "AND",
+	OR:         "OR",
 
 	// Double characters
-	case EQUALS:
-		return "Equals"
-	case NOT_EQUALS:
-		return "Not Equals"
-	case GREATER_EQUAL:
-		return "Greater than or Equals"
-	case LESS_EQUAL:
-		return "Less than or Equals"
+	EQUALS:        "EQUALS",
+	NOT_EQUALS:    "NOT_EQUALS",
+	GREATER_EQUAL: "GREATER_EQUAL",
+	LESS_EQUAL:    "LESS_EQUAL",
 
 	// Literals
-	case IDENTIFIER:
-		return "Identifier"
-	case STRING:
-		return "String"
-	case NUMBER:
-		return "Number"
+	IDENTIFIER: "IDENTIFIER",
+	STRING:     "STRING",
+	NUMBER:     "NUMBER",
 
 	// Keywords
-	case CLASS:
-		return "Class"
-	case FN:
-		return "Function"
-	case RETURN:
-		return "Return"
-	case AUTO:
-		return "Variable"
-	case IF:
-		return "If"
-	case ELSE:
-		return "Else"
-	case TRUE:
-		return "True"
-	case FALSE:
-		return "False"
-	case FOR:
-		return "For"
-	case WHILE:
-		return "While"
-	case PRINT:
-		return "Print"
-	case SUPER:
-		return "Super"
-	case THIS:
-		return "This"
-	case NULL:
-		return "Null"
-	case EOF:
-		return "Eof"
-	default:
-		return ""
+	CLASS:  "CLASS",
+	FN:     "FUNCTION",
+	RETURN: "RETURN",
+	AUTO:   "VARIABLE",
+	IF:     "IF",
+	ELSE:   "ELSE",
+	TRUE:   "TRUE",
+	FALSE:  "FALSE",
+	FOR:    "FOR",
+	WHILE:  "WHILE",
+	PRINT:  "PRINT",
+	SUPER:  "SUPER",
+	THIS:   "THIS",
+	NULL:   "NULL",
+	EOF:    "EOF",
+}
+
+func (t TokenType) String() string {
+	if name, ok := tokenTypeNames[t]; ok {
+		return name
 	}
+	return "<ERROR>"
 }

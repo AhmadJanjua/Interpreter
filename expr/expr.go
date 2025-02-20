@@ -126,11 +126,11 @@ func (b Binary) Evaluate(e *environment.Environment) (object.Object, error) {
 
 	// String concatenation
 	if right.GetKind() == tokentype.STRING && b.operator.GetType() == tokentype.PLUS {
-		l_str, l_ok := left.GetLiteral().(string)
-		r_str, r_ok := right.GetLiteral().(string)
+		lStr, lOk := left.GetLiteral().(string)
+		rStr, rOk := right.GetLiteral().(string)
 
-		if l_ok && r_ok {
-			return *object.NewObject(tokentype.STRING, l_str+r_str), nil
+		if lOk && rOk {
+			return *object.NewObject(tokentype.STRING, lStr+rStr), nil
 		}
 
 		fmt.Println("Implementation Error: Could not parse string passed in expr -> binary -> Evaluate")
@@ -142,40 +142,40 @@ func (b Binary) Evaluate(e *environment.Environment) (object.Object, error) {
 		fault.RuntimeError("Eval Error: invalid binary non-numeric operation", b.operator)
 		return object.Object{}, errors.New("invalid binary operation on non-numeric")
 	}
-	l_num, l_ok := left.GetLiteral().(float64)
-	r_num, r_ok := right.GetLiteral().(float64)
+	lNum, lOk := left.GetLiteral().(float64)
+	rNum, rOk := right.GetLiteral().(float64)
 
-	if !l_ok || !r_ok {
+	if !lOk || !rOk {
 		fmt.Println("Implementation Error: Could not parse numbers passed in expr -> binary -> Evaluate")
 		os.Exit(8)
 	}
 
 	switch b.operator.GetType() {
 	case tokentype.PLUS:
-		return *object.NewObject(tokentype.NUMBER, l_num+r_num), nil
+		return *object.NewObject(tokentype.NUMBER, lNum+rNum), nil
 	case tokentype.MINUS:
-		return *object.NewObject(tokentype.NUMBER, l_num-r_num), nil
+		return *object.NewObject(tokentype.NUMBER, lNum-rNum), nil
 	case tokentype.SLASH:
-		return *object.NewObject(tokentype.NUMBER, l_num/r_num), nil
+		return *object.NewObject(tokentype.NUMBER, lNum/rNum), nil
 	case tokentype.STAR:
-		return *object.NewObject(tokentype.NUMBER, l_num*r_num), nil
+		return *object.NewObject(tokentype.NUMBER, lNum*rNum), nil
 	case tokentype.GREATER:
-		if l_num > r_num {
+		if lNum > rNum {
 			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
 		return *object.NewObject(tokentype.FALSE, nil), nil
 	case tokentype.GREATER_EQUAL:
-		if l_num >= r_num {
+		if lNum >= rNum {
 			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
 		return *object.NewObject(tokentype.FALSE, nil), nil
 	case tokentype.LESS:
-		if l_num < r_num {
+		if lNum < rNum {
 			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
 		return *object.NewObject(tokentype.FALSE, nil), nil
 	case tokentype.LESS_EQUAL:
-		if l_num <= r_num {
+		if lNum <= rNum {
 			return *object.NewObject(tokentype.TRUE, nil), nil
 		}
 		return *object.NewObject(tokentype.FALSE, nil), nil
@@ -267,4 +267,11 @@ func (a Logical) Evaluate(e *environment.Environment) (object.Object, error) {
 		}
 	}
 	return a.right.Evaluate(e)
+}
+
+// Function
+type Call struct {
+	callee    Expr
+	paren     token.Token
+	arguments []Expr
 }

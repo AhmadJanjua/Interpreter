@@ -8,7 +8,7 @@ import (
 )
 
 // Look-up table: string -> TokenType
-var keyword_map = map[string]tokentype.TokenType{
+var keywordMap = map[string]tokentype.TokenType{
 	"class":  tokentype.CLASS,
 	"fn":     tokentype.FN,
 	"return": tokentype.RETURN,
@@ -93,9 +93,9 @@ func (s *Tokenizer) processIdentifier() {
 	}
 
 	text := s.source[s.start:s.current]
-	tok_type, ok := keyword_map[text]
+	tokType, ok := keywordMap[text]
 	if ok {
-		s.addToken(tok_type, "")
+		s.addToken(tokType, "")
 	} else {
 		s.addToken(tokentype.IDENTIFIER, "")
 	}
@@ -138,9 +138,9 @@ func (s *Tokenizer) processString() {
 }
 
 // append token to list
-func (s *Tokenizer) addToken(tok_type tokentype.TokenType, literal string) {
+func (s *Tokenizer) addToken(tokType tokentype.TokenType, literal string) {
 	lexeme := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, *token.NewToken(tok_type, lexeme, literal, s.line))
+	s.tokens = append(s.tokens, *token.NewToken(tokType, lexeme, literal, s.line))
 }
 
 // Search through string and get next token

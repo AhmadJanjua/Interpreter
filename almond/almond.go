@@ -13,11 +13,11 @@ import (
 // Process input string
 func run(inter *interpreter.Interpreter, line string) {
 	tokenizer := tokenizer.NewTokenizer(line)
-	all_toks := tokenizer.Tokenize()
-	parser := parser.NewParser(all_toks)
+	allToks := tokenizer.Tokenize()
+	parser := parser.NewParser(allToks)
 	statements := parser.Parse()
 
-	if fault.Had_fault {
+	if fault.HadFault {
 		return
 	}
 
@@ -41,10 +41,10 @@ func RunFile(filename string) error {
 	run(inter, string(data))
 
 	// exit if there is an error in the code
-	if fault.Had_fault {
+	if fault.HadFault {
 		os.Exit(65)
 	}
-	if fault.Had_runtime_fault {
+	if fault.HadRuntimeFault {
 		os.Exit(70)
 	}
 	return e
@@ -68,7 +68,7 @@ func RunPrompt() error {
 		run(inter, text)
 
 		// Dont kill session if there is an error
-		fault.Had_fault = false
+		fault.HadFault = false
 
 		fmt.Print("> ")
 	}
