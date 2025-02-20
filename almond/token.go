@@ -1,28 +1,26 @@
-package token
+package almond
 
 import (
-	"Interpreter/object"
-	"Interpreter/tokentype"
 	"fmt"
 	"os"
 	"strconv"
 )
 
 type Token struct {
-	obj    object.Object
+	obj    Object
 	lexeme string
 	line   int
 }
 
 // Constructor
-func NewToken(kind tokentype.TokenType, lexeme string, literal string, line int) *Token {
+func NewToken(kind TokenType, lexeme string, literal string, line int) *Token {
 	// Based on the token type create the literal
-	var obj object.Object
+	var obj Object
 
 	switch kind {
-	case tokentype.STRING:
-		obj = *object.NewObject(kind, literal)
-	case tokentype.NUMBER:
+	case STRING:
+		obj = *NewObject(kind, literal)
+	case NUMBER:
 		// Convert to number
 		s, err := strconv.ParseFloat(literal, 64)
 
@@ -31,9 +29,9 @@ func NewToken(kind tokentype.TokenType, lexeme string, literal string, line int)
 			fmt.Println("Implementation Error: tokenizer incorrectly parsed number")
 			os.Exit(3)
 		}
-		obj = *object.NewObject(kind, s)
+		obj = *NewObject(kind, s)
 	default:
-		obj = *object.NewObject(kind, nil)
+		obj = *NewObject(kind, nil)
 	}
 
 	thisToken := Token{obj, lexeme, line}
@@ -41,7 +39,7 @@ func NewToken(kind tokentype.TokenType, lexeme string, literal string, line int)
 }
 
 // Get the token type
-func (t *Token) GetType() tokentype.TokenType {
+func (t *Token) GetType() TokenType {
 	return t.obj.GetKind()
 }
 
@@ -52,7 +50,7 @@ func (t *Token) GetLiteral() any {
 
 func (t *Token) GetLiteralStr() string {
 	switch t.obj.GetKind() {
-	case tokentype.NUMBER:
+	case NUMBER:
 		// Assert type
 		s, ok := t.obj.GetLiteral().(float64)
 		if ok {
@@ -63,7 +61,7 @@ func (t *Token) GetLiteralStr() string {
 		fmt.Println("Implementation Error: error in number tokenizer.")
 
 		os.Exit(4)
-	case tokentype.STRING:
+	case STRING:
 		// Assert type
 		s, ok := t.obj.GetLiteral().(string)
 		if ok {
@@ -79,7 +77,7 @@ func (t *Token) GetLiteralStr() string {
 	return ""
 }
 
-func (t *Token) GetObject() object.Object {
+func (t *Token) GetObject() Object {
 	return t.obj
 }
 

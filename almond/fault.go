@@ -1,8 +1,6 @@
-package fault
+package almond
 
 import (
-	"Interpreter/token"
-	"Interpreter/tokentype"
 	"fmt"
 )
 
@@ -16,8 +14,8 @@ func report(line int, where, message string) {
 }
 
 // report errors using tokens
-func TokenError(token token.Token, message string) {
-	if token.GetType() == tokentype.EOF {
+func TokenError(token Token, message string) {
+	if token.GetType() == EOF {
 		report(token.GetLine(), " at end", message)
 	} else {
 		report(token.GetLine(), " at '"+token.GetLexeme()+"'", message)
@@ -30,7 +28,7 @@ func Error(line int, message string) {
 }
 
 // Runtime Error
-func RuntimeError(message string, tok token.Token) {
+func RuntimeError(message string, tok Token) {
 	fmt.Printf("%s\n[line %d] ", message, tok.GetLine())
 	HadRuntimeFault = true
 }

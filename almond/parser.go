@@ -1,43 +1,38 @@
-package parser
+package almond
 
 import (
-	"Interpreter/expr"
-	"Interpreter/fault"
-	"Interpreter/stmt"
-	"Interpreter/token"
-	"Interpreter/tokentype"
 	"errors"
 	"fmt"
 )
 
 type Parser struct {
-	tokens  []token.Token
+	tokens  []Token
 	current int
 }
 
 // Constructor for parser
-func NewParser(tokens []token.Token) *Parser {
+func NewParser(tokens []Token) *Parser {
 	thisParser := Parser{tokens, 0}
 	return &thisParser
 }
 
 // Get current token
-func (p *Parser) peek() *token.Token {
+func (p *Parser) peek() *Token {
 	return &p.tokens[p.current]
 }
 
 // Check if End of file is reached
 func (p *Parser) isAtEnd() bool {
-	return p.peek().GetType() == tokentype.EOF
+	return p.peek().GetType() == EOF
 }
 
 // Return previous token
-func (p *Parser) previous() *token.Token {
+func (p *Parser) previous() *Token {
 	return &p.tokens[p.current-1]
 }
 
 // Return current token and increment
-func (p *Parser) advance() *token.Token {
+func (p *Parser) advance() *Token {
 	if !p.isAtEnd() {
 		p.current++
 	}
@@ -45,7 +40,7 @@ func (p *Parser) advance() *token.Token {
 }
 
 // Report if the current token matches provided token
-func (p *Parser) check(tokType tokentype.TokenType) bool {
+func (p *Parser) check(tokType TokenType) bool {
 	if p.isAtEnd() {
 		return false
 	}
@@ -54,7 +49,7 @@ func (p *Parser) check(tokType tokentype.TokenType) bool {
 }
 
 // Report if the current token matches the list of tokens
-func (p *Parser) match(tokTypes ...tokentype.TokenType) bool {
+func (p *Parser) match(tokTypes ...TokenType) bool {
 	for _, tokType := range tokTypes {
 		if p.check(tokType) {
 			p.advance()
@@ -66,14 +61,14 @@ func (p *Parser) match(tokTypes ...tokentype.TokenType) bool {
 }
 
 // Report the error
-func (p *Parser) consume(tokType tokentype.TokenType, message string) (*token.Token, error) {
+func (p *Parser) consume(tokType TokenType, message string) (*Token, error) {
 	if p.check(tokType) {
 		return p.advance(), nil
 	}
 
-	fault.TokenError(*p.peek(), message)
+	TokenError(*p.peek(), message)
 
-	return &token.Token{}, errors.New("Parser Error: issue occured while parsing token: " + tokType.String())
+	return &Token{}, errors.New("Parser Error: issue occured while parsing token: " + tokType.String())
 }
 
 // In the case of an error advance tokens to get fresh start
@@ -81,19 +76,19 @@ func (p *Parser) synchronize() {
 	p.advance()
 
 	for !p.isAtEnd() {
-		if p.previous().GetType() == tokentype.SEMI_COLON {
+		if p.previous().GetType() == SEMI_COLON {
 			return
 		}
 
 		switch p.peek().GetType() {
-		case tokentype.CLASS:
-		case tokentype.FN:
-		case tokentype.AUTO:
-		case tokentype.FOR:
-		case tokentype.IF:
-		case tokentype.WHILE:
-		case tokentype.PRINT:
-		case tokentype.RETURN:
+		case CLASS:
+		case FN:
+		case AUTO:
+		case FOR:
+		case IF:
+		case WHILE:
+		case PRINT:
+		case RETURN:
 			return
 		}
 
@@ -102,36 +97,36 @@ func (p *Parser) synchronize() {
 }
 
 // Check primary operations and literals: L7
-func (p *Parser) primary() (expr.Expr, error) {
+func (p *Parser) primary() (Expr, error) {
 	// Check literals w/o values
-	if p.match(tokentype.FALSE, tokentype.TRUE, tokentype.NULL) {
-		return expr.NewLiteral(p.previous().GetType()), nil
+	if p.match(FALSE, TRUE, NULL) {
+		return NewLiteral(p.previous().GetType()), nil
 	}
 
 	// check literals with values
-	if p.match(tokentype.NUMBER, tokentype.STRING) {
+	if p.match(NUMBER, STRING) {
 		tok := p.previous()
 
-		if tok.GetType() == tokentype.NUMBER {
+		if tok.GetType() == NUMBER {
 			value, ok := tok.GetLiteral().(float64)
 
 			if !ok {
-				return expr.Literal{}, nil
+				return Literal{}, nil
 			}
 
-			return expr.NewNumber(value), nil
+			return NewNumber(value), nil
 		}
 
-		return expr.NewString(tok.GetLiteralStr()), nil
+		return NewString(tok.GetLiteralStr()), nil
 	}
 
 	// Get Identifier
-	if p.match(tokentype.IDENTIFIER) {
-		return expr.NewVar(*p.previous()), nil
+	if p.match(IDENTIFIER) {
+		return NewVarExpr(*p.previous()), nil
 	}
 
 	// check parenthesis
-	if p.match(tokentype.L_PAREN) {
+	if p.match(L_PAREN) {
 		// find expression
 		expression, err := p.expression()
 
@@ -140,23 +135,23 @@ func (p *Parser) primary() (expr.Expr, error) {
 			return nil, err
 		}
 
-		_, err = p.consume(tokentype.R_PAREN, "Expect ')' after expression.")
+		_, err = p.consume(R_PAREN, "Expect ')' after expression.")
 
 		// Report error and do not create any expression
 		if err != nil {
 			return nil, err
 		}
 
-		return expr.NewGrouping(expression), nil
+		return NewGroupingExpr(expression), nil
 	}
 
 	// unknown character
-	return expr.NewLiteral(p.peek().GetType()), errors.New("Parser Error: unknown literal in primary")
+	return NewLiteral(p.peek().GetType()), errors.New("Parser Error: unknown literal in primary")
 }
 
 // check for unary operations: L6
-func (p *Parser) unary() (expr.Expr, error) {
-	if p.match(tokentype.BANG, tokentype.MINUS) {
+func (p *Parser) unary() (Expr, error) {
+	if p.match(BANG, MINUS) {
 		operator := p.previous()
 		right, err := p.unary()
 
@@ -165,21 +160,21 @@ func (p *Parser) unary() (expr.Expr, error) {
 			return nil, err
 		}
 
-		return expr.NewUnary(*operator, right), nil
+		return NewUnaryExpr(*operator, right), nil
 	}
 
 	return p.primary()
 }
 
 // Higher level arithmetic operations: L5
-func (p *Parser) factor() (expr.Expr, error) {
+func (p *Parser) factor() (Expr, error) {
 	expression, err := p.unary()
 
 	if err != nil {
 		return nil, err
 	}
 
-	for p.match(tokentype.SLASH, tokentype.STAR) {
+	for p.match(SLASH, STAR) {
 		operator := p.previous()
 		right, err := p.unary()
 
@@ -187,14 +182,14 @@ func (p *Parser) factor() (expr.Expr, error) {
 			return nil, err
 		}
 
-		expression = expr.NewBinary(expression, *operator, right)
+		expression = NewBinaryExpr(expression, *operator, right)
 	}
 
 	return expression, nil
 }
 
 // Lower priority arithmetic operations: L4
-func (p *Parser) term() (expr.Expr, error) {
+func (p *Parser) term() (Expr, error) {
 	expression, err := p.factor()
 
 	// cascade error
@@ -202,7 +197,7 @@ func (p *Parser) term() (expr.Expr, error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.MINUS, tokentype.PLUS) {
+	for p.match(MINUS, PLUS) {
 		operator := p.previous()
 		right, err := p.factor()
 
@@ -211,14 +206,14 @@ func (p *Parser) term() (expr.Expr, error) {
 			return nil, err
 		}
 
-		expression = expr.NewBinary(expression, *operator, right)
+		expression = NewBinaryExpr(expression, *operator, right)
 	}
 
 	return expression, nil
 }
 
 // Evaluate comparisons between item: Level3
-func (p *Parser) comparison() (expr.Expr, error) {
+func (p *Parser) comparison() (Expr, error) {
 	expression, err := p.term()
 
 	// cascade error
@@ -226,7 +221,7 @@ func (p *Parser) comparison() (expr.Expr, error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.GREATER, tokentype.GREATER_EQUAL, tokentype.LESS, tokentype.LESS_EQUAL) {
+	for p.match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL) {
 		operator := p.previous()
 		right, err := p.term()
 
@@ -235,14 +230,14 @@ func (p *Parser) comparison() (expr.Expr, error) {
 			return nil, err
 		}
 
-		expression = expr.NewBinary(expression, *operator, right)
+		expression = NewBinaryExpr(expression, *operator, right)
 	}
 
 	return expression, nil
 }
 
 // Evaluate equality between expressions: Level2
-func (p *Parser) equality() (expr.Expr, error) {
+func (p *Parser) equality() (Expr, error) {
 	expression, err := p.comparison()
 
 	// cascade error
@@ -250,7 +245,7 @@ func (p *Parser) equality() (expr.Expr, error) {
 		return nil, err
 	}
 
-	for p.match(tokentype.NOT_EQUALS, tokentype.EQUALS) {
+	for p.match(NOT_EQUALS, EQUALS) {
 		operator := p.previous()
 		right, err := p.comparison()
 
@@ -259,21 +254,21 @@ func (p *Parser) equality() (expr.Expr, error) {
 			return nil, err
 		}
 
-		expression = expr.NewBinary(expression, *operator, right)
+		expression = NewBinaryExpr(expression, *operator, right)
 	}
 
 	// no errors
 	return expression, nil
 }
 
-func (p *Parser) and() (expr.Expr, error) {
+func (p *Parser) and() (Expr, error) {
 	express, err := p.equality()
 
 	if err != nil {
 		return nil, err
 	}
 
-	for p.match(tokentype.AND) {
+	for p.match(AND) {
 		operator := p.previous()
 
 		right, err := p.equality()
@@ -282,21 +277,21 @@ func (p *Parser) and() (expr.Expr, error) {
 			return nil, err
 		}
 
-		express = expr.NewLogical(express, *operator, right)
+		express = NewLogicalExpr(express, *operator, right)
 	}
 
 	return express, nil
 
 }
 
-func (p *Parser) or() (expr.Expr, error) {
+func (p *Parser) or() (Expr, error) {
 	express, err := p.and()
 
 	if err != nil {
 		return nil, err
 	}
 
-	for p.match(tokentype.OR) {
+	for p.match(OR) {
 		operator := p.previous()
 
 		right, err := p.and()
@@ -305,19 +300,19 @@ func (p *Parser) or() (expr.Expr, error) {
 			return nil, err
 		}
 
-		express = expr.NewLogical(express, *operator, right)
+		express = NewLogicalExpr(express, *operator, right)
 	}
 	return express, nil
 }
 
-func (p *Parser) assignment() (expr.Expr, error) {
+func (p *Parser) assignment() (Expr, error) {
 	express, err := p.or()
 
 	if err != nil {
 		return nil, err
 	}
 
-	if p.match(tokentype.ASSIGNMENT) {
+	if p.match(ASSIGNMENT) {
 		equals := p.previous()
 		value, err := p.assignment()
 
@@ -325,59 +320,59 @@ func (p *Parser) assignment() (expr.Expr, error) {
 			return nil, err
 		}
 
-		s, ok := express.(*expr.Var)
+		s, ok := express.(*VarExpr)
 
 		if !ok {
-			fault.TokenError(*equals, "Invalid assignment target.")
+			TokenError(*equals, "Invalid assignment target.")
 			fmt.Printf("Dynamic type: %T\n", express)
-			return expr.Literal{}, errors.New("invalid assignment target")
+			return Literal{}, errors.New("invalid assignment target")
 		}
 
 		name := s.GetToken()
-		return expr.NewAssign(name, value), nil
+		return NewAssignExpr(name, value), nil
 	}
 	return express, nil
 }
 
 // Entry into recursive descent parsing: Level1
-func (p *Parser) expression() (expr.Expr, error) {
+func (p *Parser) expression() (Expr, error) {
 	return p.assignment()
 }
 
-func (p *Parser) expressionStmt() (stmt.Stmt, error) {
+func (p *Parser) expressionStmt() (Stmt, error) {
 	value, err := p.expression()
 
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = p.consume(tokentype.SEMI_COLON, "Expect ';' after value.")
+	_, err = p.consume(SEMI_COLON, "Expect ';' after value.")
 
 	if err != nil {
 		return nil, err
 	}
-	return *stmt.NewExpression(value), nil
+	return *NewExprStmt(value), nil
 }
 
-func (p *Parser) printStmt() (stmt.Stmt, error) {
+func (p *Parser) printStmt() (Stmt, error) {
 	value, err := p.expression()
 
 	if err != nil {
 		return nil, err
 	}
 
-	p.consume(tokentype.SEMI_COLON, "Expect ';' after value.")
-	return *stmt.NewPrint(value), nil
+	p.consume(SEMI_COLON, "Expect ';' after value.")
+	return *NewPrintStmt(value), nil
 }
 
-func (p *Parser) block() ([]stmt.Stmt, error) {
-	var statements []stmt.Stmt
+func (p *Parser) block() ([]Stmt, error) {
+	var statements []Stmt
 
-	for !p.check(tokentype.R_BRACE) && !p.isAtEnd() {
+	for !p.check(R_BRACE) && !p.isAtEnd() {
 		statements = append(statements, p.declaration())
 	}
 
-	_, err := p.consume(tokentype.R_BRACE, "Expected '}' after block.")
+	_, err := p.consume(R_BRACE, "Expected '}' after block.")
 
 	if err != nil {
 		return nil, err
@@ -385,8 +380,8 @@ func (p *Parser) block() ([]stmt.Stmt, error) {
 	return statements, nil
 }
 
-func (p *Parser) ifStmt() (stmt.Stmt, error) {
-	p.consume(tokentype.L_PAREN, "Expected '(' after 'if'")
+func (p *Parser) ifStmt() (Stmt, error) {
+	p.consume(L_PAREN, "Expected '(' after 'if'")
 
 	condition, err := p.expression()
 
@@ -394,7 +389,7 @@ func (p *Parser) ifStmt() (stmt.Stmt, error) {
 		return nil, err
 	}
 
-	p.consume(tokentype.R_PAREN, "Expected ')' after if condition")
+	p.consume(R_PAREN, "Expected ')' after if condition")
 
 	thenBranch, err := p.statement()
 
@@ -402,10 +397,10 @@ func (p *Parser) ifStmt() (stmt.Stmt, error) {
 		return nil, err
 	}
 
-	var elseBranch stmt.Stmt
+	var elseBranch Stmt
 	elseBranch = nil
 
-	if p.match(tokentype.ELSE) {
+	if p.match(ELSE) {
 		elseBranch, err = p.statement()
 
 		if err != nil {
@@ -413,11 +408,11 @@ func (p *Parser) ifStmt() (stmt.Stmt, error) {
 		}
 	}
 
-	return *stmt.NewIf(condition, thenBranch, elseBranch), nil
+	return *NewIfStmt(condition, thenBranch, elseBranch), nil
 }
 
-func (p *Parser) whileStmt() (stmt.Stmt, error) {
-	_, err := p.consume(tokentype.L_PAREN, "Expect '(' after while.")
+func (p *Parser) whileStmt() (Stmt, error) {
+	_, err := p.consume(L_PAREN, "Expect '(' after while.")
 
 	if err != nil {
 		return nil, err
@@ -429,7 +424,7 @@ func (p *Parser) whileStmt() (stmt.Stmt, error) {
 		return nil, err
 	}
 
-	_, err = p.consume(tokentype.R_PAREN, "Expect ')' after condition")
+	_, err = p.consume(R_PAREN, "Expect ')' after condition")
 
 	if err != nil {
 		return nil, err
@@ -441,22 +436,22 @@ func (p *Parser) whileStmt() (stmt.Stmt, error) {
 		return nil, err
 	}
 
-	return stmt.NewWhile(condition, body), nil
+	return NewWhileStmt(condition, body), nil
 
 }
 
-func (p *Parser) forStmt() (stmt.Stmt, error) {
-	_, err := p.consume(tokentype.L_PAREN, "Expect '(' after 'for'.")
+func (p *Parser) forStmt() (Stmt, error) {
+	_, err := p.consume(L_PAREN, "Expect '(' after 'for'.")
 
 	if err != nil {
 		return nil, err
 	}
 
-	var initializer stmt.Stmt
+	var initializer Stmt
 
-	if p.match(tokentype.SEMI_COLON) {
+	if p.match(SEMI_COLON) {
 		initializer = nil
-	} else if p.match(tokentype.AUTO) {
+	} else if p.match(AUTO) {
 		initializer, err = p.varDeclaration()
 
 		if err != nil {
@@ -470,23 +465,23 @@ func (p *Parser) forStmt() (stmt.Stmt, error) {
 		}
 	}
 
-	var condition expr.Expr
+	var condition Expr
 
-	if !p.check(tokentype.SEMI_COLON) {
+	if !p.check(SEMI_COLON) {
 		condition, err = p.expression()
 
 		if err != nil {
 			return nil, err
 		}
 	}
-	_, err = p.consume(tokentype.SEMI_COLON, "Expect ';' after loop condition")
+	_, err = p.consume(SEMI_COLON, "Expect ';' after loop condition")
 
 	if err != nil {
 		return nil, err
 	}
 
-	var increment expr.Expr
-	if !p.check(tokentype.R_PAREN) {
+	var increment Expr
+	if !p.check(R_PAREN) {
 		increment, err = p.expression()
 
 		if err != nil {
@@ -494,7 +489,7 @@ func (p *Parser) forStmt() (stmt.Stmt, error) {
 		}
 	}
 
-	_, err = p.consume(tokentype.R_PAREN, "Expect ')' after the for clause.")
+	_, err = p.consume(R_PAREN, "Expect ')' after the for clause.")
 
 	if err != nil {
 		return nil, err
@@ -507,61 +502,61 @@ func (p *Parser) forStmt() (stmt.Stmt, error) {
 	}
 
 	if increment != nil {
-		body = stmt.NewBlock([]stmt.Stmt{body, stmt.NewExpression(increment)})
+		body = NewBlockStmt([]Stmt{body, NewExprStmt(increment)})
 	}
 
 	if condition == nil {
-		condition = expr.NewLiteral(tokentype.TRUE)
+		condition = NewLiteral(TRUE)
 	}
 
-	body = stmt.NewWhile(condition, body)
+	body = NewWhileStmt(condition, body)
 
 	if initializer != nil {
-		body = stmt.NewBlock([]stmt.Stmt{initializer, body})
+		body = NewBlockStmt([]Stmt{initializer, body})
 	}
 
 	return body, nil
 }
 
-func (p *Parser) statement() (stmt.Stmt, error) {
-	if p.match(tokentype.FOR) {
+func (p *Parser) statement() (Stmt, error) {
+	if p.match(FOR) {
 		return p.forStmt()
 	}
-	if p.match(tokentype.IF) {
+	if p.match(IF) {
 		return p.ifStmt()
 	}
-	if p.match(tokentype.PRINT) {
+	if p.match(PRINT) {
 		return p.printStmt()
 	}
 
-	if p.match(tokentype.WHILE) {
+	if p.match(WHILE) {
 		return p.whileStmt()
 	}
 
-	if p.match(tokentype.L_BRACE) {
+	if p.match(L_BRACE) {
 		value, err := p.block()
 
 		if err != nil {
 			return nil, err
 		}
 
-		return stmt.NewBlock(value), nil
+		return NewBlockStmt(value), nil
 	}
 	return p.expressionStmt()
 
 }
 
-func (p *Parser) varDeclaration() (stmt.Stmt, error) {
+func (p *Parser) varDeclaration() (Stmt, error) {
 	// TODO: handle error
-	name, err := p.consume(tokentype.IDENTIFIER, "Expected variable name.")
+	name, err := p.consume(IDENTIFIER, "Expected variable name.")
 
 	if err != nil {
 		return nil, err
 	}
 
-	var initializer expr.Expr
+	var initializer Expr
 
-	if p.match(tokentype.ASSIGNMENT) {
+	if p.match(ASSIGNMENT) {
 		initializer, err = p.expression()
 
 		if err != nil {
@@ -569,21 +564,21 @@ func (p *Parser) varDeclaration() (stmt.Stmt, error) {
 		}
 	}
 
-	_, err = p.consume(tokentype.SEMI_COLON, "Expected ';' after variable declaration.")
+	_, err = p.consume(SEMI_COLON, "Expected ';' after variable declaration.")
 
 	if err != nil {
 		return nil, err
 	}
 
-	return stmt.NewVar(*name, initializer), nil
+	return NewVarStmt(*name, initializer), nil
 
 }
 
-func (p *Parser) declaration() stmt.Stmt {
-	var statement stmt.Stmt
+func (p *Parser) declaration() Stmt {
+	var statement Stmt
 	var err error
 
-	if p.match(tokentype.AUTO) {
+	if p.match(AUTO) {
 		statement, err = p.varDeclaration()
 	} else {
 		statement, err = p.statement()
@@ -597,8 +592,8 @@ func (p *Parser) declaration() stmt.Stmt {
 	return statement
 }
 
-func (p *Parser) Parse() []stmt.Stmt {
-	var statements []stmt.Stmt
+func (p *Parser) Parse() []Stmt {
+	var statements []Stmt
 
 	for !p.isAtEnd() {
 		statements = append(statements, p.declaration())

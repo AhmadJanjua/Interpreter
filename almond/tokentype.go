@@ -1,4 +1,4 @@
-package tokentype
+package almond
 
 type TokenType int
 

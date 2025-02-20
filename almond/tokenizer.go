@@ -1,28 +1,25 @@
-package tokenizer
+package almond
 
 import (
-	"Interpreter/fault"
-	"Interpreter/token"
-	"Interpreter/tokentype"
 	"unicode"
 )
 
 // Look-up table: string -> TokenType
-var keywordMap = map[string]tokentype.TokenType{
-	"class":  tokentype.CLASS,
-	"fn":     tokentype.FN,
-	"return": tokentype.RETURN,
-	"var":    tokentype.AUTO,
-	"if":     tokentype.IF,
-	"else":   tokentype.ELSE,
-	"true":   tokentype.TRUE,
-	"false":  tokentype.FALSE,
-	"for":    tokentype.FOR,
-	"while":  tokentype.WHILE,
-	"print":  tokentype.PRINT,
-	"super":  tokentype.SUPER,
-	"this":   tokentype.THIS,
-	"null":   tokentype.NULL,
+var keywordMap = map[string]TokenType{
+	"class":  CLASS,
+	"fn":     FN,
+	"return": RETURN,
+	"var":    AUTO,
+	"if":     IF,
+	"else":   ELSE,
+	"true":   TRUE,
+	"false":  FALSE,
+	"for":    FOR,
+	"while":  WHILE,
+	"print":  PRINT,
+	"super":  SUPER,
+	"this":   THIS,
+	"null":   NULL,
 }
 
 // Helper to check characters for identifer
@@ -35,12 +32,12 @@ type Tokenizer struct {
 	current int
 	line    int
 	source  string
-	tokens  []token.Token
+	tokens  []Token
 }
 
 // Construct Tokenizer
 func NewTokenizer(source string) *Tokenizer {
-	tmp := Tokenizer{0, 0, 1, source, []token.Token{}}
+	tmp := Tokenizer{0, 0, 1, source, []Token{}}
 	return &tmp
 }
 
@@ -97,7 +94,7 @@ func (s *Tokenizer) processIdentifier() {
 	if ok {
 		s.addToken(tokType, "")
 	} else {
-		s.addToken(tokentype.IDENTIFIER, "")
+		s.addToken(IDENTIFIER, "")
 	}
 }
 
@@ -115,7 +112,7 @@ func (s *Tokenizer) processNumber() {
 		}
 	}
 
-	s.addToken(tokentype.NUMBER, s.source[s.start:s.current])
+	s.addToken(NUMBER, s.source[s.start:s.current])
 }
 
 // Parse string
@@ -128,19 +125,19 @@ func (s *Tokenizer) processString() {
 	}
 
 	if s.end() {
-		fault.Error(s.line, "Unterminated string")
+		Error(s.line, "Unterminated string")
 		return
 	}
 	s.advance()
 
 	text := s.source[s.start+1 : s.current-1]
-	s.addToken(tokentype.STRING, text)
+	s.addToken(STRING, text)
 }
 
 // append token to list
-func (s *Tokenizer) addToken(tokType tokentype.TokenType, literal string) {
+func (s *Tokenizer) addToken(tokType TokenType, literal string) {
 	lexeme := s.source[s.start:s.current]
-	s.tokens = append(s.tokens, *token.NewToken(tokType, lexeme, literal, s.line))
+	s.tokens = append(s.tokens, *NewToken(tokType, lexeme, literal, s.line))
 }
 
 // Search through string and get next token
@@ -150,56 +147,56 @@ func (s *Tokenizer) nextToken() {
 	switch c {
 	// Single character
 	case '(':
-		s.addToken(tokentype.L_PAREN, "")
+		s.addToken(L_PAREN, "")
 	case ')':
-		s.addToken(tokentype.R_PAREN, "")
+		s.addToken(R_PAREN, "")
 	case '{':
-		s.addToken(tokentype.L_BRACE, "")
+		s.addToken(L_BRACE, "")
 	case '}':
-		s.addToken(tokentype.R_BRACE, "")
+		s.addToken(R_BRACE, "")
 	case ',':
-		s.addToken(tokentype.COMMA, "")
+		s.addToken(COMMA, "")
 	case '.':
-		s.addToken(tokentype.PERIOD, "")
+		s.addToken(PERIOD, "")
 	case '-':
-		s.addToken(tokentype.MINUS, "")
+		s.addToken(MINUS, "")
 	case '+':
-		s.addToken(tokentype.PLUS, "")
+		s.addToken(PLUS, "")
 	case '*':
-		s.addToken(tokentype.STAR, "")
+		s.addToken(STAR, "")
 	case '/':
-		s.addToken(tokentype.SLASH, "")
+		s.addToken(SLASH, "")
 	case ';':
-		s.addToken(tokentype.SEMI_COLON, "")
+		s.addToken(SEMI_COLON, "")
 	case '|':
-		s.addToken(tokentype.OR, "")
+		s.addToken(OR, "")
 	case '&':
-		s.addToken(tokentype.AND, "")
+		s.addToken(AND, "")
 
 	// Single-Double characters
 	case '=':
 		if s.match('=') {
-			s.addToken(tokentype.EQUALS, "")
+			s.addToken(EQUALS, "")
 		} else {
-			s.addToken(tokentype.ASSIGNMENT, "")
+			s.addToken(ASSIGNMENT, "")
 		}
 	case '!':
 		if s.match('=') {
-			s.addToken(tokentype.NOT_EQUALS, "")
+			s.addToken(NOT_EQUALS, "")
 		} else {
-			s.addToken(tokentype.BANG, "")
+			s.addToken(BANG, "")
 		}
 	case '>':
 		if s.match('=') {
-			s.addToken(tokentype.GREATER_EQUAL, "")
+			s.addToken(GREATER_EQUAL, "")
 		} else {
-			s.addToken(tokentype.GREATER, "")
+			s.addToken(GREATER, "")
 		}
 	case '<':
 		if s.match('=') {
-			s.addToken(tokentype.LESS_EQUAL, "")
+			s.addToken(LESS_EQUAL, "")
 		} else {
-			s.addToken(tokentype.LESS, "")
+			s.addToken(LESS, "")
 		}
 
 	// Deal with comments
@@ -220,17 +217,17 @@ func (s *Tokenizer) nextToken() {
 		} else if unicode.IsLetter(c) {
 			s.processIdentifier()
 		} else if !unicode.IsSpace(c) {
-			fault.Error(s.line, "Unexpected character.")
+			Error(s.line, "Unexpected character.")
 		}
 	}
 }
 
 // Go through source and create a tokenized list
-func (s *Tokenizer) Tokenize() []token.Token {
+func (s *Tokenizer) Tokenize() []Token {
 	for !s.end() {
 		s.start = s.current
 		s.nextToken()
 	}
-	s.tokens = append(s.tokens, *token.NewToken(tokentype.EOF, "", "", s.line))
+	s.tokens = append(s.tokens, *NewToken(EOF, "", "", s.line))
 	return s.tokens
 }

@@ -1,23 +1,19 @@
 package almond
 
 import (
-	"Interpreter/fault"
-	"Interpreter/interpreter"
-	"Interpreter/parser"
-	"Interpreter/tokenizer"
 	"bufio"
 	"fmt"
 	"os"
 )
 
 // Process input string
-func run(inter *interpreter.Interpreter, line string) {
-	tokenizer := tokenizer.NewTokenizer(line)
+func run(inter *Interpreter, line string) {
+	tokenizer := NewTokenizer(line)
 	allToks := tokenizer.Tokenize()
-	parser := parser.NewParser(allToks)
+	parser := NewParser(allToks)
 	statements := parser.Parse()
 
-	if fault.HadFault {
+	if HadFault {
 		return
 	}
 
@@ -27,7 +23,7 @@ func run(inter *interpreter.Interpreter, line string) {
 // Run the code from a file
 func RunFile(filename string) error {
 	// Create a new interpreter
-	inter := interpreter.NewInterpreter()
+	inter := NewInterpreter()
 
 	// read file bytes and get error
 	data, e := os.ReadFile(filename)
@@ -41,10 +37,10 @@ func RunFile(filename string) error {
 	run(inter, string(data))
 
 	// exit if there is an error in the code
-	if fault.HadFault {
+	if HadFault {
 		os.Exit(65)
 	}
-	if fault.HadRuntimeFault {
+	if HadRuntimeFault {
 		os.Exit(70)
 	}
 	return e
@@ -53,7 +49,7 @@ func RunFile(filename string) error {
 // Run interactive console
 func RunPrompt() error {
 	// Create a new interpreter
-	inter := interpreter.NewInterpreter()
+	inter := NewInterpreter()
 
 	// Scan console inputs
 	scanner := bufio.NewScanner(os.Stdin)
@@ -68,7 +64,7 @@ func RunPrompt() error {
 		run(inter, text)
 
 		// Dont kill session if there is an error
-		fault.HadFault = false
+		HadFault = false
 
 		fmt.Print("> ")
 	}

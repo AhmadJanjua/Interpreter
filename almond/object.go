@@ -1,21 +1,20 @@
-package object
+package almond
 
 import (
-	"Interpreter/tokentype"
 	"fmt"
 	"os"
 	"strconv"
 )
 
 type Object struct {
-	kind    tokentype.TokenType
+	kind    TokenType
 	literal any
 }
 
 // Create object and ensure types are managed correctly
-func NewObject(k tokentype.TokenType, v any) *Object {
+func NewObject(k TokenType, v any) *Object {
 	switch k {
-	case tokentype.STRING:
+	case STRING:
 		val, ok := v.(string)
 		if !ok {
 			fmt.Println("Implmentation Error: Created a string object and passed non-string value.")
@@ -23,7 +22,7 @@ func NewObject(k tokentype.TokenType, v any) *Object {
 		}
 		return &Object{k, val}
 
-	case tokentype.NUMBER:
+	case NUMBER:
 		val, ok := v.(float64)
 		if !ok {
 			fmt.Println("Implmentation Error: Created a number object and passed non-float64 value.")
@@ -39,11 +38,11 @@ func NewObject(k tokentype.TokenType, v any) *Object {
 func (o *Object) Bool() bool {
 	// 0, null, false
 	switch o.kind {
-	case tokentype.NULL:
+	case NULL:
 		return false
-	case tokentype.FALSE:
+	case FALSE:
 		return false
-	case tokentype.NUMBER:
+	case NUMBER:
 		num, ok := o.literal.(float64)
 
 		if !ok {
@@ -65,8 +64,8 @@ func (left *Object) Equal(right *Object) bool {
 	}
 
 	switch left.kind {
-	case tokentype.NUMBER:
-	case tokentype.STRING:
+	case NUMBER:
+	case STRING:
 		if right.literal != left.literal {
 			return false
 		}
@@ -76,7 +75,7 @@ func (left *Object) Equal(right *Object) bool {
 	return true
 }
 
-func (o *Object) GetKind() tokentype.TokenType {
+func (o *Object) GetKind() TokenType {
 	return o.kind
 }
 
@@ -90,7 +89,7 @@ func (o *Object) GetLiteral() any {
 
 func (o *Object) String() string {
 	switch o.kind {
-	case tokentype.STRING:
+	case STRING:
 		s, ok := o.literal.(string)
 
 		if !ok {
@@ -98,7 +97,7 @@ func (o *Object) String() string {
 			os.Exit(8)
 		}
 		return s
-	case tokentype.NUMBER:
+	case NUMBER:
 		f, ok := o.literal.(float64)
 
 		if !ok {
